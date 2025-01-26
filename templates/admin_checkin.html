@@ -7,8 +7,8 @@
             <main class="col d-flex py-3">
                 <div class="container">
                     <h3>Check-in</h3>
-                    {%if not current_date == evento.data %}
-                    <p><b>Lista Indisponível</b> - Evento programado para {{evento.data}}.</p>
+                    {%if not current_date == atividade.data %}
+                    <p><b>Lista Indisponível</b> - Atividade programada para {{atividade.data}}.</p>
                     {%endif%}
                     <div class="row align-items-center mt-2 mb-2">
                         <div class="col p-0">
@@ -33,7 +33,7 @@
                                     <th>Data Inscrição</th>
                                     <th>Validar</th>
                                 </tr>
-                                {%if current_date == evento.data%}
+                                {%if current_date == atividade.data%}
                                 {%for inscricao in inscricoes%}
                                 <tr>
                                     <td>{{inscricao.id}}</td>
@@ -43,10 +43,27 @@
                                     <td>{{inscricao.dataHora}}</td>
                                     {%if not inscricao.has_checkin%}
                                     <td>
-                                        <form method="POST" class="p-0 m-0" action="{% url 'adminCheckinValidar' pk_evento=evento.id pk_inscricao=inscricao.id %}">
+                                        <form method="POST" class="p-0 m-0" action="{% url 'adminCheckinValidar' pk_atividade=atividade.id pk_inscricao=inscricao.id %}">
                                             {% csrf_token %}
                                             <input type="hidden" class="form-control" name="validar" value="{{inscricao.id}}">
-                                            <button type="submit" class="btn btn-success" alt="Validar"><i class="bi bi-check2-square"></i></button>
+                                            <button 
+                                            type="submit"
+                                            class="btn btn-secondary"
+                                            alt="Validar">
+                                            <i class="bi bi-square"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    {%else%}
+                                    <td>
+                                        <form method="POST" class="p-0 m-0" action="{% url 'adminCheckinInvalidar' pk_atividade=atividade.id pk_inscricao=inscricao.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" class="form-control" name="invalidar" value="{{inscricao.id}}">
+                                            <button 
+                                            type="submit"
+                                            class="btn btn-success">
+                                            <i class="bi bi-check2-square"></i>
+                                            </button>
                                         </form>
                                     </td>
                                     {%endif%}

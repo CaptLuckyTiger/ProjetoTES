@@ -5,12 +5,12 @@
         <div class="row flex-nowrap">
             {%include 'sidebar.html'%}
             <main class="col py-3">
-                <h3>Cadastrar Exibição</h3>
+                <h3>Cadastrar Atividade</h3>
                 <div class="container d-flex align-items-center justify-content-center">
                     <form class="form-floating w-75" method="POST">
                         {% csrf_token %}
                         {% bootstrap_form form %}
-                        <input type="submit" class="btn btn-lg btn-primary mt-3 mb-3 w-100 " value="Cadastrar">
+                        <input type="submit" class="btn btn-lg btn-primary mt-3 mb-3 w-100" value="Cadastrar">
                     </form>
                 </div>
             </main>

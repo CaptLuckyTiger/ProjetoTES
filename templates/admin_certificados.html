@@ -6,7 +6,7 @@
             {%include 'sidebar.html'%}
             <main class="col d-flex py-3">
                 <div class="container">
-                    <h3>Cerficados</h3>
+                    <h3>Certificados</h3>
                     <div class="row align-items-center mt-2 mb-2">
                         <div class="col p-0">
                             <form method="get" class="p-0 m-0 w-100" action="{% url 'adminCertificado' %}">
@@ -17,9 +17,9 @@
                                     <input type="text" class="form-control" name="filter" placeholder="Tópico">
                                     <div class="col-auto ps-2">
                                         <select class="form-select" name="event" id="event">
-                                            <option value="-1" selected>Selecionar Evento</option>
-                                            {%for evento in eventos%}
-                                                <option value="{{evento.id}}" >{{evento.tema|slice:":30"}}</option>
+                                            <option value="-1" selected>Selecionar Atividade</option>
+                                            {%for atividade in atividades%}
+                                                <option value="{{atividade.id}}" >{{atividade.tema|slice:":30"}}</option>
                                             {%endfor%}
                                             
                                         </select>
@@ -38,6 +38,20 @@
                                     <th>CPF</th>
                                     <th>Operações</th>
                                 </tr>
+                                {%for participante in participantes%}
+                                <tr>
+                                    <td>{{participante.id}}</td>
+                                    <td>{{participante.nome}}</td>
+                                    <td>{{participante.sobrenome}}</td>
+                                    <td>{{participante.CPF}}</td>
+                                    <td>
+                                        <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
+                                            {% csrf_token %}   
+                                            <a href="{%url 'adminDownloadCertificado' pk_atividade=atividade.id pk_participante=participante.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {%endfor%}
                                 {%for aluno in alunos%}
                                 <tr>
                                     <td>{{aluno.id}}</td>
@@ -47,7 +61,7 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=aluno.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{%url 'adminDownloadCertificado' pk_atividade=atividade.id pk_participante=aluno.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
                                         </form>
                                     </td>
                                 </tr>
@@ -61,7 +75,7 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=professor.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{%url 'adminDownloadCertificado' pk_atividade=atividade.id pk_participante=professor.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
                                         </form>
                                     </td>
                                 </tr>

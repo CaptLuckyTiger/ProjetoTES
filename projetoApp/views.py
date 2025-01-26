@@ -1,23 +1,25 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.db.models import Count 
-from datetime import date, datetime, time
-from .forms import CustomUserForm, ParticipanteForm, EventoForm, ProfessorForm, ExibicaoForm, AddAlunoExibicaoForm, AddProfessorExibicaoForm, AlunoForm, AvaliacaoForm
+from datetime import date, datetime
+
+from django.urls import reverse
+from .forms import CustomUserForm, ParticipanteForm, EventoForm, ProfessorForm, AtividadeForm, AddParticipanteEventoForm, AddAlunoEventoForm, AddProfessorEventoForm, AlunoForm, AvaliacaoForm
 from .models import *
 from .certificate import generateCertificado
 
 def index(request):
     context = {}
     context['current_date'] = date.today()
-    context['evento'] = evento = Evento.objects.get_home_event()
-    context["exibicoes"] = Exibicao.objects.filter(evento=evento).order_by("topico")
+    context['atividade'] = atividade = Atividade.objects.get_home_event()
+    context["eventos"] = Evento.objects.filter(atividade=atividade).order_by("topico")
 
     if request.user.is_authenticated:   
         context['user_is_participante'] = Participante.objects.filter(user=request.user).exists()
-        context['user_is_inscrito'] = Inscricao.objects.filter(evento=evento, participante__user=request.user).exists()
+        context['user_is_inscrito'] = Inscricao.objects.filter(atividade=atividade, participante__user=request.user).exists()
     else:
         context['user_is_participante'] = False
         context['user_is_inscrito'] = False
@@ -26,37 +28,37 @@ def index(request):
 
 @login_required(login_url="/login")
 def inscrever(request, event_id):
-    evento = get_object_or_404(Evento, pk=event_id)
+    atividade = get_object_or_404(Atividade, pk=event_id)
     participante = Participante.objects.filter(user=request.user).first()
     
     context = {}
     context['user_is_participante'] = Participante.objects.filter(user=request.user).exists()
-    context['user_is_inscrito'] = Inscricao.objects.filter(evento=evento, participante__user=request.user).exists()
+    context['user_is_inscrito'] = Inscricao.objects.filter(atividade=atividade, participante__user=request.user).exists()
 
     if not context['user_is_inscrito'] and context['user_is_participante']:
-        inscricao = Inscricao.objects.create(evento=evento, participante=participante, confirmado=True,dataHora=datetime.now())
+        inscricao = Inscricao.objects.create(atividade=atividade, participante=participante, confirmado=True,dataHora=datetime.now())
         inscricao.save()
         
     return redirect("home")
 
 @login_required(login_url="/login")
 def desinscrever(request, event_id):
-    evento = get_object_or_404(Evento, pk=event_id)
+    atividade = get_object_or_404(Atividade, pk=event_id)
     participante = Participante.objects.filter(user=request.user).first()
     
     context = {}
     context['user_is_participante'] = Participante.objects.filter(user=request.user).exists()
-    context['user_is_inscrito'] = Inscricao.objects.filter(evento=evento, participante__user=request.user).exists()
+    context['user_is_inscrito'] = Inscricao.objects.filter(atividade=atividade, participante__user=request.user).exists()
 
     if context['user_is_inscrito'] and context['user_is_participante']:
-        Inscricao.objects.filter(evento=evento, participante=participante).delete()
+        Inscricao.objects.filter(atividade=atividade, participante=participante).delete()
 
     return redirect("home")
 
 def entrar(request):
     if request.user.is_authenticated:
         if request.user.is_staff:
-            return redirect('adminEvento')
+            return redirect('adminAtividade')
         else:
             return redirect('home')
     
@@ -69,7 +71,7 @@ def entrar(request):
                 #messages.success(request, f"Olá, <b>{user.first_name}</b>! Você logou com sucesso!")
                 print("LOGGED IN")
                 if user.is_staff:
-                    return redirect('adminEvento')
+                    return redirect('adminAtividade')
                 else:
                     return redirect('home')
         else:
@@ -112,68 +114,68 @@ def sair(request):
     return redirect('home')
 
 @login_required(login_url="login")
-def adminEvento(request):
+def adminAtividade(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     context = {}
-    eventos = Evento.objects.filter(ativo=True).order_by('data')
-    context['eventos'] = eventos
+    atividades = Atividade.objects.filter(ativo=True).order_by('data')
+    context['atividades'] = atividades
     if 'filter' in request.GET:
-        context['eventos'] = Evento.objects.get_filtered_evento(request.GET['filter'])
-        return render(request, 'admin_evento.html', context)
+        context['atividades'] = Atividade.objects.get_filtered_atividade(request.GET['filter'])
+        return render(request, 'admin_atividade.html', context)
     
-    if 'pk_evento' in request.POST:
-        print(Evento.objects.filter(pk=request.POST['pk_evento']))
-        evento = Evento.objects.filter(pk=request.POST['pk_evento']).first()
-        evento.ativo = False
-        evento.save()
-        return redirect('adminEvento')
+    if 'pk_atividade' in request.POST:
+        print(Atividade.objects.filter(pk=request.POST['pk_atividade']))
+        atividade = Atividade.objects.filter(pk=request.POST['pk_atividade']).first()
+        atividade.ativo = False
+        atividade.save()
+        return redirect('adminAtividade')
 
-    return render(request, 'admin_evento.html', context)
+    return render(request, 'admin_atividade.html', context)
 
 @login_required(login_url='login')
-def adminCadastrarEvento(request):
+def adminCadastrarAtividade(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     context = {}
-    form = EventoForm(request.POST)
+    form = AtividadeForm(request.POST)
     if request.method == "POST":
         if form.is_valid():
-            evento = form.save()
-            #messages.success(request, f"Evento Cadastrado com sucesso!")
-            return redirect('adminEvento')
+            atividade = form.save()
+            #messages.success(request, f"Atividade Cadastrada com sucesso!")
+            return redirect('adminAtividade')
         else:
             for error in list(form.errors.values()):
                 pass
-            context['form'] = EventoForm(request.POST)
+            context['form'] = AtividadeForm(request.POST)
     else:
-        context['form'] = EventoForm(initial=EventoForm.get_inital_data())    
+        context['form'] = AtividadeForm(initial=AtividadeForm.get_inital_data())    
 
-    return render(request, 'admin_evento_cadastrar.html', context)
+    return render(request, 'admin_atividade_cadastrar.html', context)
 
 @login_required(login_url='login')
-def adminEditarEvento(request, pk):
+def adminEditarAtividade(request, pk):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
     context = {}
-    evento = get_object_or_404(Evento,pk=pk)
-    form = EventoForm(request.POST, instance=evento)
+    atividade = get_object_or_404(Atividade,pk=pk)
+    form = AtividadeForm(request.POST, instance=atividade)
     if request.method == "POST":
         if form.is_valid():
-            evento = form.save()
-            #messages.success(request, f"Evento Cadastrado com sucesso!")
-            return redirect('adminEvento')
+            atividade = form.save()
+            #messages.success(request, f"Atividade Cadastrada com sucesso!")
+            return redirect('adminAtividade')
         else:
             for error in list(form.errors.values()):
                 pass
 
-    context['form'] = EventoForm(instance=evento)    
+    context['form'] = AtividadeForm(instance=atividade)    
 
-    return render(request, 'admin_evento_editar.html', context)
+    return render(request, 'admin_atividade_editar.html', context)
 
 
 @login_required(login_url="login")
@@ -293,151 +295,180 @@ def adminCheckin(request):
         logout(request)
         return redirect('home')
     context = {}
-    context["evento"] = evento = Evento.objects.get_home_event()
+    context["atividade"] = atividade = Atividade.objects.get_home_event()
     context["current_date"] = date.today()
-    context["inscricoes"] = Inscricao.objects.filter(evento = evento).annotate(has_checkin=Count('checkin')).order_by("id")
+    context["inscricoes"] = Inscricao.objects.filter(atividade = atividade).annotate(has_checkin=Count('checkin')).order_by("id")
     
     if 'filter' in request.GET:
-        context['inscricoes'] = Inscricao.objects.get_filtered_inscricao(request.GET['filter'], evento)
+        context['inscricoes'] = Inscricao.objects.get_filtered_inscricao(request.GET['filter'], atividade)
         return render(request, "admin_checkin.html", context)
     
     return render(request, "admin_checkin.html", context)
 
 @login_required(login_url="/login")
-def adminCheckinValidar(request,pk_evento, pk_inscricao):
+def adminCheckinValidar(request,pk_atividade, pk_inscricao):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
-    evento = Evento.objects.get(pk=pk_evento)
-    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, evento=evento)
+    atividade = Atividade.objects.get(pk=pk_atividade)
+    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, atividade=atividade)
     if not CheckIn.objects.filter(inscricao=inscricao).exists():
         checkin = CheckIn.objects.create(inscricao=inscricao, dataHora=datetime.now())
         checkin.save()
 
     return redirect('adminCheckin')
 
+@login_required(login_url="/login")
+def adminCheckinInvalidar(request, pk_atividade, pk_inscricao):
+    if not request.user.validated:
+        logout(request)
+        return redirect('home')
+    
+    atividade = Atividade.objects.get(pk=pk_atividade)
+    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, atividade=atividade)
+    checkin = CheckIn.objects.filter(inscricao=inscricao).first()
+
+    if checkin:
+        checkin.delete()
+
+    return redirect('adminCheckin')
+
 @login_required(login_url="/login")    
-def adminExibicao(request):
+def adminEvento(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     professor = Professor.objects.filter(user = request.user).first()
     context = {}
-    context["eventos"] = eventos = Evento.objects.filter(ativo=1)
-    context["exibicoes"] = Exibicao.objects.filter(professores__in=[professor])
+    context["atividades"] = atividades = Evento.objects.filter(ativo=1)
+    context["eventos"] = Evento.objects.filter(professores__in=[professor])
 
     if 'filter' in request.GET:
         if request.GET['event'] == "-1":
             if request.GET['filter_by'] == "id":
-                context["exibicoes"] = Exibicao.objects.filter(professores__in=[professor], topico__icontains=request.GET["filter"])
+                context["eventos"] = Evento.objects.filter(professores__in=[professor], topico__icontains=request.GET["filter"])
             elif request.GET["filter_by"] == "all":
-                context["exibicoes"] = Exibicao.objects.filter(topico__icontains=request.GET["filter"])
+                context["eventos"] = Evento.objects.filter(topico__icontains=request.GET["filter"])
             else:
-                return redirect(adminExibicao)
+                return redirect(adminEvento)
         else:
             if request.GET['filter_by'] == "id":
-                context["exibicoes"] = Exibicao.objects.filter(evento__pk=request.GET['event'], professores__in=[professor], topico__icontains=request.GET["filter"])
+                context["eventos"] = Evento.objects.filter(evento__pk=request.GET['event'], professores__in=[professor], topico__icontains=request.GET["filter"])
             elif request.GET["filter_by"] == "all":
-                context["exibicoes"] = Exibicao.objects.filter(evento__pk=request.GET['event'], topico__icontains=request.GET["filter"])
+                context["eventos"] = Evento.objects.filter(evento__pk=request.GET['event'], topico__icontains=request.GET["filter"])
             else:
-                return redirect(adminExibicao)
-        return render(request, "admin_exibicao.html", context)
+                return redirect(adminEvento)
+        return render(request, "admin_Evento.html", context)
 
-    if 'pk_exibicao' in request.POST:
-        exibicao = Exibicao.objects.filter(pk=request.POST['pk_exibicao']).first()
-        exibicao.delete()
-        return redirect(adminExibicao)
+    if 'pk_evento' in request.POST:
+        evento = Evento.objects.filter(pk=request.POST['pk_evento']).first()
+        evento.delete()
+        return redirect(adminEvento)
 
-    return render(request, "admin_exibicao.html", context)
+    return render(request, "admin_evento.html", context)
 
 @login_required(login_url="/login")    
-def adminCadastrarExibicao(request):
+def adminCadastrarEvento(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     context = {}
-    form = ExibicaoForm(request.POST)
+    form = EventoForm(request.POST)
     if request.method == "POST":
         if form.is_valid():
-            exibicao = form.save()
+            evento = form.save()
             professor = Professor.objects.get(user = request.user)
-            exibicao.professores.add(professor)
-            exibicao.save()
+            evento.professores.add(professor)
+            evento.save()
             #messages.success(request, f"Evento Cadastrado com sucesso!")
-            return redirect('adminExibicao')
+            return redirect('adminEvento')
         else:
             for error in list(form.errors.values()):
                 pass
-            context['form'] = ExibicaoForm(request.POST)
+            context['form'] = EventoForm(request.POST)
     else:
-        context['form'] = ExibicaoForm()
-    return render(request, "admin_cadastrar_exibicao.html", context)
+        context['form'] = EventoForm()
+    return render(request, "admin_cadastrar_evento.html", context)
 
 @login_required(login_url="/login")
-def adminVisualizarExibicao(request,pk):
+def adminVisualizarEvento(request,pk):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
     context = {}
-    context["exibicao"] = exibicao = Exibicao.objects.get(pk=pk)
+    context["evento"] = evento = Evento.objects.get(pk=pk)
     professor = Professor.objects.filter(user = request.user).first()
-    form = AddAlunoExibicaoForm(request.POST)
-    form2 = AddProfessorExibicaoForm(request.POST)
-    
-    if "pk_professor_remover" in request.POST:
-        professor = Professor.objects.get(pk=request.POST["pk_professor_remover"])
-        exibicao.professores.remove(professor)
+    form = AddParticipanteEventoForm(request.POST)
+    form2 = AddAlunoEventoForm(request.POST)
+    form3 = AddProfessorEventoForm(request.POST)
+
+    if "pk_participante_remover" in request.POST:
+        participante = Participante.objects.get(pk=request.POST["pk_participante_remover"])
+        evento.participantes.remove(participante)
 
     if "pk_aluno_remover" in request.POST:
         aluno = Aluno.objects.get(pk=request.POST["pk_aluno_remover"])
-        exibicao.alunos.remove(aluno)
+        evento.alunos.remove(aluno)
+
+    if "pk_professor_remover" in request.POST:
+        professor = Professor.objects.get(pk=request.POST["pk_professor_remover"])
+        evento.professores.remove(professor)
+
     
     if request.method == 'POST':
-        if form2.is_valid():
-            professor = form2.cleaned_data['professor']
-            exibicao.professores.add(professor)
-
-            return redirect("adminVisualizarExibicao", pk=pk)
-
         if form.is_valid():
-            aluno = form.cleaned_data['aluno']
-            exibicao.alunos.add(aluno)
+            participante = form.cleaned_data['participante']
+            evento.participantes.add(participante)
 
-            return redirect("adminVisualizarExibicao", pk=pk)
+            return redirect("adminVisualizarEvento", pk=pk)
+
+        if form2.is_valid():
+            aluno = form2.cleaned_data['aluno']
+            evento.alunos.add(aluno)
+
+            return redirect("adminVisualizarEvento", pk=pk)
+        
+        if form3.is_valid():
+            professor = form3.cleaned_data['professor']
+            evento.professores.add(professor)
+
+            return redirect("adminVisualizarEvento", pk=pk)
     else:
-        form = AddAlunoExibicaoForm()
-        form2 = AddProfessorExibicaoForm()
+        form = AddParticipanteEventoForm()
+        form2 = AddAlunoEventoForm()
+        form3 = AddProfessorEventoForm()
     
     context["form"] = form
     context["form2"] = form2
-    context["size"] = exibicao.professores.count()
-    context["in_exibicao"] = Exibicao.objects.filter(pk=pk,professores__in=[professor]).exists()
-    return render(request, "admin_exibicao_visualizar.html", context)
+    context["form3"] = form3
+    context["size"] = evento.professores.count()
+    context["in_evento"] = Evento.objects.filter(pk=pk,professores__in=[professor]).exists()
+    return render(request, "admin_evento_visualizar.html", context)
 
 @login_required(login_url='login')
-def adminEditarExibicao(request, pk):
+def adminEditarEvento(request, pk):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
     context = {}
-    exibicao = get_object_or_404(Exibicao,pk=pk)
-    form = ExibicaoForm(request.POST, instance=exibicao)
+    evento = get_object_or_404(Evento,pk=pk)
+    form = EventoForm(request.POST, instance=evento)
     
     if request.method == "POST":
         if form.is_valid():
-            exibicao = form.save()
+            evento = form.save()
             #messages.success(request, f"Evento Cadastrado com sucesso!")
-            return redirect('adminExibicao')
+            return redirect('adminEvento')
         else:
             for error in list(form.errors.values()):
                 pass
 
-    context['form'] = ExibicaoForm(instance=exibicao)
+    context['form'] = EventoForm(instance=evento)
 
-    return render(request, 'admin_exibicao_editar.html', context)
+    return render(request, 'admin_evento_editar.html', context)
 
 
 @login_required(login_url="/login")
@@ -581,33 +612,33 @@ def adminEditarAluno(request, pk):
 
 
 @login_required(login_url="/login")
-def adminAvaliar(request, pk_exibicao, pk_aluno):
+def adminAvaliar(request, pk_Evento, pk_aluno):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
     context = {}
     context["aluno"]= aluno = get_object_or_404(Aluno,pk=pk_aluno)
-    context["exibicao"] = exibicao = get_object_or_404(Exibicao,pk=pk_exibicao)
-    avaliacao = Avaliacao.objects.filter(aluno=aluno, exibicao=exibicao)
+    context["Evento"] = Evento = get_object_or_404(Evento,pk=pk_Evento)
+    avaliacao = Avaliacao.objects.filter(aluno=aluno, Evento=Evento)
     context['avaliacoes'] = avaliacao
     
     if 'filter' in request.GET:
         if request.GET["filter"] == "":
             return render(request, 'admin_avaliar_aluno.html', context)
 
-        context['avaliacoes'] = Avaliacao.objects.filter(aluno=aluno, exibicao=exibicao, dataAvaliacao=request.GET['filter'])
+        context['avaliacoes'] = Avaliacao.objects.filter(aluno=aluno, Evento=Evento, dataAvaliacao=request.GET['filter'])
         return render(request, 'admin_avaliar_aluno.html', context)
     
     if 'pk_avaliacao' in request.POST:
         avaliacao = Avaliacao.objects.filter(pk=request.POST['pk_avaliacao']).first()
         avaliacao.delete()
-        return redirect('adminAvaliar', pk_exibicao=pk_exibicao, pk_aluno=pk_aluno)
+        return redirect('adminAvaliar', pk_Evento=pk_Evento, pk_aluno=pk_aluno)
     
     return render(request, 'admin_avaliar_aluno.html', context)
 
 @login_required(login_url='/login')
-def adminCadastrarAvaliacao(request, pk_aluno, pk_exibicao):
+def adminCadastrarAvaliacao(request, pk_aluno, pk_Evento):
     if not request.user.validated:
         logout(request)
         return redirect('home')
@@ -617,15 +648,15 @@ def adminCadastrarAvaliacao(request, pk_aluno, pk_exibicao):
     if request.method == "POST":
         if form.is_valid():
             user = get_object_or_404(Aluno,pk=pk_aluno)
-            exibicao = get_object_or_404(Exibicao,pk=pk_exibicao)
+            Evento = get_object_or_404(Evento,pk=pk_Evento)
             avaliacao = form.save(commit=False)
             avaliacao.dataAvaliacao = date.today()
             avaliacao.aluno = user
-            avaliacao.exibicao = exibicao
+            avaliacao.Evento = Evento
             avaliacao.save()
 
             #messages.success(request, f"Cadastro realizado com sucesso, <b>{user.first_name}</b>!")
-            return redirect('adminAvaliar', pk_aluno, pk_exibicao)
+            return redirect('adminAvaliar', pk_aluno, pk_Evento)
     else:
         form = AvaliacaoForm()
     
@@ -645,7 +676,7 @@ def adminEditarAvaliacao(request, pk):
         if form.is_valid():
             form.save()
             #messages.success(request, f"Evento Cadastrado com sucesso!")
-            return redirect('adminAvaliar', pk_exibicao = avaliacao.exibicao.id, pk_aluno = avaliacao.aluno.id)
+            return redirect('adminAvaliar', pk_Evento = avaliacao.Evento.id, pk_aluno = avaliacao.aluno.id)
         else:
             for error in list(form.errors.values()):
                 pass
@@ -658,22 +689,40 @@ def adminCertificado(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-    context = {}
-    context["evento"] = evento = Evento.objects.get_last_event()
-    context["alunos"] = Aluno.objects.filter(exibicao__evento=evento).distinct()
-    context["professores"] = Professor.objects.filter(exibicao__evento=evento).distinct()
-    context["eventos"] = Evento.objects.filter(ativo=1, data__lte=date.today())
 
+    context = {}
+    # Obtendo o evento atual
+    context["atividade"] = atividade = Atividade.objects.get_last_event()
+
+    # Lista de participantes, considerando check-ins
+    participantes_com_checkin = Participante.objects.filter(evento__atividade=atividade).distinct()
+
+    # Filtrando para incluir apenas os participantes com check-in
+    participantes_com_checkin = [
+        participante for participante in participantes_com_checkin
+        if CheckIn.objects.filter(inscricao__participante=participante).exists()
+    ]
+    
+    context["participantes"] = participantes_com_checkin
+    context["alunos"] = Aluno.objects.filter(evento__atividade=atividade).distinct()
+    context["professores"] = Professor.objects.filter(evento__atividade=atividade).distinct()
+    context["atividades"] = Atividade.objects.filter(ativo=1, data__lte=date.today())
+
+    # Filtro baseado em parâmetros da URL
     if 'filter' in request.GET:
         if request.GET['event'] == "-1":
-            context["alunos"] = Aluno.objects.get_filtered_aluno(request.GET['filter']).filter(exibicao__evento=evento)
-            context["professores"] = Professor.objects.get_filtered_professor(request.GET['filter']).filter(exibicao__evento=evento)
+            context["participantes"] = Participante.objects.get_filtered_participante(request.GET['filter']).filter(evento__atividade=atividade)
+            context["alunos"] = Aluno.objects.get_filtered_aluno(request.GET['filter']).filter(evento__atividade=atividade)
+            context["professores"] = Professor.objects.get_filtered_professor(request.GET['filter']).filter(evento__atividade=atividade)
         else:
-            context["alunos"] = Aluno.objects.get_filtered_aluno(request.GET['filter']).filter(exibicao__evento=request.GET['event'])
-            context["professores"] = Professor.objects.get_filtered_professor(request.GET['filter']).filter(exibicao__evento=request.GET['event'])
+            context["participantes"] = Participante.objects.get_filtered_participante(request.GET['filter']).filter(evento__atividade=request.GET['event'])
+            context["alunos"] = Aluno.objects.get_filtered_aluno(request.GET['filter']).filter(evento__atividade=request.GET['event'])
+            context["professores"] = Professor.objects.get_filtered_professor(request.GET['filter']).filter(evento__atividade=request.GET['event'])
+
         return render(request, "admin_certificados.html", context)
-    
+
     return render(request, "admin_certificados.html", context)
+
 
 @login_required(login_url="/login")
 def adminDownloadCertificado(request, pk_evento, pk_participante):
@@ -682,10 +731,10 @@ def adminDownloadCertificado(request, pk_evento, pk_participante):
     usuario = get_object_or_404(Usuario, pk=pk_participante)
     certificado = Certificado.objects.filter(evento=evento, usuario=usuario)
 
-    if(Exibicao.objects.filter(alunos=usuario, evento=evento).exists()):
-        exibicao = Exibicao.objects.filter(alunos=usuario, evento=evento).first()
-    elif(Exibicao.objects.filter(professores=usuario, evento=evento).exists()):
-        exibicao = Exibicao.objects.filter(professores=usuario, evento=evento).first()
+    if(Evento.objects.filter(alunos=usuario, evento=evento).exists()):
+        Evento = Evento.objects.filter(alunos=usuario, evento=evento).first()
+    elif(Evento.objects.filter(professores=usuario, evento=evento).exists()):
+        Evento = Evento.objects.filter(professores=usuario, evento=evento).first()
     else:
         redirect("adminCertificado")
 
@@ -693,7 +742,7 @@ def adminDownloadCertificado(request, pk_evento, pk_participante):
         pdf_path = certificado.first().codigo
     else:
         date_time = evento.data.strftime("%d/%m/%Y")
-        diff = evento.data - exibicao.data_cadastro
+        diff = evento.data - Evento.data_cadastro
         semana = (diff.days // 7) * 14
         pdf_path = generateCertificado(usuario.nome+" "+usuario.sobrenome, evento.tema, date_time, str(semana))
         certificado = Certificado(dataEmissao=datetime.now(), codigo=pdf_path, evento=evento, usuario=usuario)
@@ -708,7 +757,7 @@ def adminDownloadCertificado(request, pk_evento, pk_participante):
 def certificados(request):
     context = {}
     context["participante"] = participante = Participante.objects.get(user=request.user.id)
-    context["eventos"] = evento = Evento.objects.filter(inscricao__participante=participante, inscricao__checkin__isnull=False, data__lt=date.today()).distinct()
+    context["atividades"] = evento = Evento.objects.filter(inscricao__participante=participante, inscricao__checkin__isnull=False, data__lt=date.today()).distinct()
     print(evento)
     
 
@@ -737,3 +786,16 @@ def downloadCertificado(request, pk_evento, pk_participante):
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="certificado.pdf"'
     return response
+
+@login_required
+def delete_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+
+    if request.method == 'POST':
+        item.delete()
+        #messages.success(request, "Item excluído com sucesso!")
+        return redirect('lista_de_itens')
+
+    # Redireciona se acessar via GET (opcional)
+    #messages.error(request, "Ação inválida.")
+    return redirect('lista_de_itens')
