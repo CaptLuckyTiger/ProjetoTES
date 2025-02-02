@@ -5,11 +5,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
 from django.db.models import Count 
 from datetime import date, datetime
-
-from django.urls import reverse
+from django.contrib import messages
+from .strategies import *
 from .forms import CustomUserForm, ParticipanteForm, EventoForm, ProfessorForm, AtividadeForm, AddParticipanteEventoForm, AddAlunoEventoForm, AddProfessorEventoForm, AlunoForm, AvaliacaoForm
 from .models import *
 from .certificate import generateCertificado
+
+STRATEGIES = {
+    'aluno': AlunoDeleteStrategy(),
+    'professor': ProfessorDeleteStrategy(),
+    'participante': ParticipanteDeleteStrategy(),
+    'evento': EventoDeleteStrategy(),
+    'atividade': AtividadeDeleteStrategy()
+}
 
 def index(request):
     context = {}
@@ -799,3 +807,17 @@ def delete_item(request, item_id):
     # Redireciona se acessar via GET (opcional)
     #messages.error(request, "Ação inválida.")
     return redirect('lista_de_itens')
+
+@login_required
+def deleteItem(request, model, id):
+    try:
+        strategy = STRATEGIES.get(model.lower())
+        if not strategy:
+            raise ValueError("Model não suportado.")
+
+        strategy.delete(id)
+        messages.success(request, f'{model} excluído com sucesso!')
+    except Exception as e:
+        messages.error(request, f'Erro ao excluir: {str(e)}')
+
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
