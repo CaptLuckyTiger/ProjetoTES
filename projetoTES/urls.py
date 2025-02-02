@@ -14,9 +14,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+from django.conf import settings
 from django.urls import path
 from projetoApp import views
+from django.conf.urls.static import static
+from projetoApp.views import deleteItem
 
 urlpatterns = [
     path('admin_atividade/', views.adminAtividade, name = "adminAtividade"),
@@ -52,5 +54,5 @@ urlpatterns = [
     path('desinscrever/<int:event_id>/', views.desinscrever, name='desinscrever'),
     path('admin_download_certificado/<int:pk_atividade>/<int:pk_participante>/', views.adminDownloadCertificado, name='adminDownloadCertificado'),
     path('download_certificado/<int:pk_atividade>/<int:pk_participante>/', views.downloadCertificado, name='downloadCertificado'),
-    path('delete/<int:item_id>/', views.delete_item, name='delete_item'),
-]
+    path('delete/<str:model>/<int:id>/', deleteItem, name='deleteItem'),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
