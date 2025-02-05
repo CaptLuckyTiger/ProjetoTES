@@ -620,33 +620,40 @@ def adminEditarAluno(request, pk):
 
 
 @login_required(login_url="/login")
-def adminAvaliar(request, pk_Evento, pk_aluno):
+def adminAvaliar(request, pk_evento, pk_aluno):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
-    context = {}
-    context["aluno"]= aluno = get_object_or_404(Aluno,pk=pk_aluno)
-    context["Evento"] = Evento = get_object_or_404(Evento,pk=pk_Evento)
-    avaliacao = Avaliacao.objects.filter(aluno=aluno, Evento=Evento)
-    context['avaliacoes'] = avaliacao
+    aluno = get_object_or_404(Aluno, pk=pk_aluno)
+    evento = get_object_or_404(Evento, pk=pk_evento)
+    
+    avaliacoes = Avaliacao.objects.filter(aluno=aluno, evento=evento)
     
     if 'filter' in request.GET:
-        if request.GET["filter"] == "":
-            return render(request, 'admin_avaliar_aluno.html', context)
-
-        context['avaliacoes'] = Avaliacao.objects.filter(aluno=aluno, Evento=Evento, dataAvaliacao=request.GET['filter'])
-        return render(request, 'admin_avaliar_aluno.html', context)
+        filter_date = request.GET.get('filter')
+        if filter_date:
+            avaliacoes = avaliacoes.filter(dataAvaliacao=filter_date)
     
     if 'pk_avaliacao' in request.POST:
-        avaliacao = Avaliacao.objects.filter(pk=request.POST['pk_avaliacao']).first()
-        avaliacao.delete()
-        return redirect('adminAvaliar', pk_Evento=pk_Evento, pk_aluno=pk_aluno)
+        avaliacao = avaliacoes.filter(pk=request.POST['pk_avaliacao']).first()
+        if avaliacao:
+            avaliacao.delete()
+            messages.success(request, 'Avaliação excluída com sucesso!')
+        else:
+            messages.error(request, 'Avaliação não encontrada.')
+        return redirect('adminAvaliar', pk_evento=pk_evento, pk_aluno=pk_aluno)
+    
+    context = {
+        'aluno': aluno,
+        'evento': evento,
+        'avaliacoes': avaliacoes,
+    }
     
     return render(request, 'admin_avaliar_aluno.html', context)
 
 @login_required(login_url='/login')
-def adminCadastrarAvaliacao(request, pk_aluno, pk_Evento):
+def adminCadastrarAvaliacao(request, pk_aluno, pk_evento):
     if not request.user.validated:
         logout(request)
         return redirect('home')
@@ -656,7 +663,7 @@ def adminCadastrarAvaliacao(request, pk_aluno, pk_Evento):
     if request.method == "POST":
         if form.is_valid():
             user = get_object_or_404(Aluno,pk=pk_aluno)
-            Evento = get_object_or_404(Evento,pk=pk_Evento)
+            Evento = get_object_or_404(Evento,pk=pk_evento)
             avaliacao = form.save(commit=False)
             avaliacao.dataAvaliacao = date.today()
             avaliacao.aluno = user
@@ -664,7 +671,7 @@ def adminCadastrarAvaliacao(request, pk_aluno, pk_Evento):
             avaliacao.save()
 
             #messages.success(request, f"Cadastro realizado com sucesso, <b>{user.first_name}</b>!")
-            return redirect('adminAvaliar', pk_aluno, pk_Evento)
+            return redirect('adminAvaliar', pk_aluno, pk_evento)
     else:
         form = AvaliacaoForm()
     
@@ -684,7 +691,7 @@ def adminEditarAvaliacao(request, pk):
         if form.is_valid():
             form.save()
             #messages.success(request, f"Evento Cadastrado com sucesso!")
-            return redirect('adminAvaliar', pk_Evento = avaliacao.Evento.id, pk_aluno = avaliacao.aluno.id)
+            return redirect('adminAvaliar', pk_evento = avaliacao.Evento.id, pk_aluno = avaliacao.aluno.id)
         else:
             for error in list(form.errors.values()):
                 pass
