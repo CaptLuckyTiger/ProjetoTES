@@ -8,16 +8,16 @@ from datetime import datetime
 
 TEMPLATE_PATH = "projetoApp\certificate_template\modelo.pptx"
 
-def generateCertificado(nomeCompleto, temaEvento, dataEvento, cargaHoraria):   
+def generateCertificado(nomeCompleto, temaAtividade, dataAtividade, cargaHoraria):   
     certificado = Presentation(TEMPLATE_PATH)
     replace_text_in_presentation(certificado, "FULLNAME", nomeCompleto)
-    replace_text_in_presentation(certificado, "EVENT", temaEvento)
-    replace_text_in_presentation(certificado, "DATE", dataEvento)
+    replace_text_in_presentation(certificado, "EVENT", temaAtividade)
+    replace_text_in_presentation(certificado, "DATE", dataAtividade)
     replace_text_in_presentation(certificado, "TIME", cargaHoraria)
 
     #THIS IS FINE
     current_timestamp = datetime.now().timestamp()
-    fname = nomeCompleto+temaEvento+str(int(current_timestamp))
+    fname = nomeCompleto+temaAtividade+str(int(current_timestamp))
     fname = hashlib.md5(bytes(fname, "UTF-8"))
     hashString = fname.hexdigest()
     certificado.save("projetoApp/temp_certificate/"+hashString+".pptx")

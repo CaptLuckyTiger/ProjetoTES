@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from localflavor.br.models import BRCPFField
-from .managers import CustomUserManager, AtividadeManager, ProfessorManager, InscricaoManager, ParticipanteManager, AlunoManager
+from .managers import CustomUserManager, EventoManager, ProfessorManager, InscricaoManager, ParticipanteManager, AlunoManager
 from datetime import date, datetime
 
 # Create your models here.
@@ -39,7 +39,7 @@ class Aluno(Usuario):
 class Professor(Usuario):
     objects = ProfessorManager()
 
-class Atividade(models.Model):
+class Evento(models.Model):
     tema = models.CharField(verbose_name = "Tema", max_length = 255, blank = False)
     descricao = models.TextField(verbose_name = "Descrição", blank = False)
     data = models.DateField(verbose_name = "Data", null = False)
@@ -52,9 +52,9 @@ class Atividade(models.Model):
     banner = models.URLField(verbose_name="Banner", blank = True)
     ativo = models.BooleanField(verbose_name="Ativo", blank=False, null= False, default=True)
 
-    objects = AtividadeManager()
+    objects = EventoManager()
 
-    def duracaoAtividade(self):
+    def duracaoEvento(self):
         inicio = datetime.combine(date.today(), self.horario_fim)
         fim = datetime.combine(date.today(), self.horario_inicio)
         diff = inicio - fim
@@ -63,13 +63,13 @@ class Atividade(models.Model):
     def __str__(self):
         return self.tema
 
-class Evento(models.Model):
+class Atividade(models.Model):
     topico = models.CharField(verbose_name="Tópico", max_length = 255, blank=False)
     descricao = models.TextField(verbose_name="Descrição", blank=True)
     participantes = models.ManyToManyField(Participante, verbose_name="Participantes")
     alunos = models.ManyToManyField(Aluno, verbose_name="Alunos")
     professores = models.ManyToManyField(Professor, verbose_name="Professores")
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=True)
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=True)
     ativo = models.BooleanField(verbose_name="Ativo", blank=False, null= False, default=True)
     data_cadastro = models.DateField(verbose_name="Data Criação", default=date.today)
 
@@ -77,18 +77,18 @@ class Avaliacao(models.Model):
     dataAvaliacao = models.DateField(verbose_name="Data Avaliação", null=False)
     descricao = models.TextField(verbose_name="Decrição", blank=False)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=False)
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=False)
+    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False)
 
 class Convite(models.Model):
     emailDst = models.EmailField(verbose_name="Email")
     mensagem = models.TextField(verbose_name="Mensagem", blank=True)
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=False)
+    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False)
 
 class Inscricao(models.Model):
     dataHora = models.DateTimeField(verbose_name="Horario")
     confirmado = models.BooleanField()
     participante = models.ForeignKey(Participante, on_delete=models.CASCADE, null=False)
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=True)
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=True)
 
     objects = InscricaoManager()
     
@@ -98,7 +98,7 @@ class CheckIn(models.Model):
 
 class Certificado(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE)
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE)
     dataEmissao = models.DateField(verbose_name="Data Emissão", null = False)
     codigo = models.CharField(verbose_name="Código", max_length=255, blank=True)
     

@@ -24,7 +24,7 @@
         .cropped-image {
             overflow: hidden;
             padding: 0;
-            height: 300px; /* Set your desired height here */
+            height: 300px;
         }
 
         .cropped-image img {
@@ -37,37 +37,37 @@
     <body>
         <div class="container">
             <div class="row mb-3 p-0 cropped-image">
-                <img src="{{atividade.banner}}" class="img-fluid" alt="{{atividade.tema}}">
+                <img src="{{evento.banner}}" class="img-fluid" alt="{{evento.tema}}">
             </div>
             <div class="row border mb-3 p-2">
                 <div class="col">
                     <div class="row">
-                        <h3>{{atividade.tema}}</h3>
+                        <h3>{{evento.tema}}</h3>
                     </div>
                     <div class="row">
                         <div class="d-flex align-items-center">
                             <i class="bi bi-calendar"></i>
-                            <p class="ms-2 mb-0">{{atividade.data}} - {{atividade.horario_inicio}} - {{atividade.horario_fim}}</p>
+                            <p class="ms-2 mb-0">{{evento.data}} - {{evento.horario_inicio}} - {{evento.horario_fim}}</p>
                         </div>
                     </div>
                     <div class="row">
                         <div class="d-flex align-items-center">
                             <i class="bi bi-geo-alt"></i>
-                            <p class="ms-2 mb-0">{{atividade.logradouro}} - {{atividade.bairro}}, {{atividade.cidade}} - {{atividade.estado}}</p>
+                            <p class="ms-2 mb-0">{{evento.logradouro}} - {{evento.bairro}}, {{evento.cidade}} - {{evento.estado}}</p>
                         </div>
                     </div>
                 </div>
                 <div class="col d-flex justify-content-end align-items-center">
-                        {%if current_date > atividade.data%}
+                        {%if current_date > evento.data%}
                             <button type="button" disabled  class="btn btn-lg btn-secondary me-5">Inscrição Fechada</button>
                         {%else%}
                             {%if user_is_participante and not user_is_inscrito%}
-                            <form method="get" class="p-0 m-0" action="{% url 'inscrever' event_id=atividade.id %}">
+                            <form method="get" class="p-0 m-0" action="{% url 'inscrever' event_id=evento.id %}">
                                 <input type="hidden" class="form-control" name="inscrever">
                                 <button type="submit"  class="btn btn-lg btn-success me-5">Realizar Inscrição</button>
                             </form>
                             {%elif user_is_participante and user_is_inscrito%}
-                            <form method="get" class="p-0 m-0" action="{% url 'desinscrever' event_id=atividade.id %}">
+                            <form method="get" class="p-0 m-0" action="{% url 'desinscrever' event_id=evento.id %}">
                                 <input type="hidden" class="form-control" name="desinscrever">
                                 <button type="submit"  class="btn btn-lg btn-danger me-5">Cancelar Inscrição</button>
                             </form>
@@ -81,20 +81,20 @@
             <div class="row mb-3 p-3 border">
                 <h5>Descrição</h5>
                 <hr>
-                <p class="text-break">{{atividade.descricao}}</p>
+                <p class="text-break">{{evento.descricao}}</p>
             </div>
             <div class="row mb-3 p-3 border">
-                <h5>Atividades</h5>
+                <h5>Eventos</h5>
                 <hr>
                 
                 <table class="table table-striped">
                       <tbody>
-                        {%for evento in eventos%}
+                        {%for atividade in atividades%}
                         <tr>
                             <th scope="row">1</th>
-                            <td>{{evento.topico}}</td>
+                            <td>{{atividade.topico}}</td>
                             <td>
-                                {%for professor in evento.professores.all%}
+                                {%for professor in atividade.professores.all%}
                                     {{professor.nome}} -
                                 {%endfor%}
                             </td>

@@ -19,25 +19,11 @@
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-primary me-2">Buscar</button>
                                     </div>
-                                    <input type="text" class="form-control" name="filter" placeholder="Tópico">
-                                    <div class="col-auto ps-2">
-                                        <select class="form-select" name="event" id="event">
-                                            <option value="-1" selected>Todos Eventos</option>
-                                            {% for evento in eventos %}
-                                                <option value="{{ evento.id }}">{{ evento.tema|slice:"0:30" }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="col-auto ps-2">
-                                        <select class="form-select" name="filter_by" id="filter_by">
-                                            <option value="id" selected>Meus Eventos</option>
-                                            <option value="all">Todos Eventos</option>
-                                        </select>
-                                    </div>
+                                    <input type="text" class="form-control" name="filter" placeholder="Tema">
                                 </div>
                             </form>
                         </div>
-                        <div class="col-auto p-0 ps-2 d-flex justify-content-end">
+                        <div class="col col-auto p-0 ps-2 d-flex justify-content-end">
                             <a type="button" class="btn btn-success" href="cadastrar">Novo</a>
                         </div>
                     </div>
@@ -47,17 +33,19 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Tópico</th>
+                                        <th>Tema</th>
+                                        <th>Data</th>
                                         <th>Operações</th>
-                                        <th>Visualizar</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for evento in eventos %}
                                     <tr>
                                         <td>{{ evento.id }}</td>
-                                        <td><a href="{% url 'adminVisualizarEvento' pk=evento.id %}">{{ evento.topico }}</a></td>
+                                        <td>{{ evento.tema }}</td>
+                                        <td>{{ evento.data }}</td>
                                         <td>
+                                            <!-- Botão de Exclusão -->
                                             <button type="button"
                                                     class="btn btn-danger"
                                                     data-bs-toggle="modal"
@@ -67,13 +55,9 @@
                                                     data-id="{{ evento.id }}">
                                                     <i class="bi bi-trash"></i>
                                             </button>
+                                            <!-- Botão de Edição -->
                                             <a href="{% url 'adminEditarEvento' pk=evento.id %}" class="btn btn-warning" alt="Editar">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a href="{% url 'adminVisualizarEvento' pk=evento.id %}" class="btn btn-success" alt="Visualizar">
-                                                <i class="bi bi-eye"></i>
+                                                <i class="bi bi-pencil-square"></i>
                                             </a>
                                         </td>
                                     </tr>

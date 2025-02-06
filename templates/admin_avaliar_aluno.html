@@ -6,11 +6,11 @@
             {%include 'sidebar.html'%}
             <main class="col d-flex py-3">
                 <div class="container">
-                    <a class="text-decoration-none" href="{% url 'adminVisualizarExibicao' exibicao.id %}"><h3><i class="bi bi-arrow-left-circle"></i> Voltar</h3></a>
-                    <h3>Avaliações - {{exibicao.topico}} - {{aluno.nome}} {{aluno.sobrenome}}</h3>
+                    <a class="text-decoration-none" href="{% url 'adminVisualizarAtividade' pk=atividade.id %}"><h3><i class="bi bi-arrow-left-circle"></i> Voltar</h3></a>
+                    <h3>Avaliações - {{atividade.topico}} - {{aluno.nome}} {{aluno.sobrenome}}</h3>
                     <div class="row align-items-center mt-2 mb-2">
                         <div class="col p-0">
-                            <form method="get" class="p-0 m-0" action="{% url 'adminAvaliar' pk_exibicao=exibicao.id pk_aluno=aluno.id %}">
+                            <form method="get" class="p-0 m-0" action="{% url 'adminAvaliar' pk_atividade=atividade.id pk_aluno=aluno.id %}">
                                 <div class="input-group">
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-primary me-2">Buscar</button>
@@ -20,7 +20,7 @@
                             </form>
                         </div>
                         <div class="col col-auto p-0 ps-2 d-flex justify-content-end">
-                            <a type="button" class="btn btn-success" href="{% url 'adminCadastrarAvaliacao' pk_exibicao=exibicao.id pk_aluno=aluno.id %}">Novo</a>
+                            <a type="button" class="btn btn-success" href="{% url 'adminCadastrarAvaliacao' pk_atividade=atividade.id pk_aluno=aluno.id %}">Novo</a>
                         </div>
                     </div>
                     <div class="row">
@@ -38,7 +38,7 @@
                                     <td>{{avaliacao.descricao|slice:":50"}}</td>
                                     <td>{{avaliacao.dataAvaliacao}}</td>
                                     <td>
-                                        <form method="POST" class="p-0 m-0" action="{% url 'adminAvaliar' pk_exibicao=exibicao.id pk_aluno=aluno.id %}">
+                                        <form method="POST" class="p-0 m-0" action="{% url 'adminAvaliar' pk_atividade=atividade.id pk_aluno=aluno.id %}">
                                             {% csrf_token %}   
                                             <button type="submit" class="btn btn-danger" alt="Apagar"><i class="bi bi-trash"></i></button>
                                             <input type="hidden" class="form-control" name="pk_avaliacao" value="{{avaliacao.id}}">

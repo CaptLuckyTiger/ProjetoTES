@@ -1,6 +1,6 @@
 
 from django import forms
-from .models import CustomUser, Participante, Professor, Aluno, Evento, Atividade, Avaliacao
+from .models import CustomUser, Participante, Professor, Aluno, Atividade, Evento, Avaliacao
 from bootstrap_datepicker_plus.widgets import TimePickerInput, DatePickerInput
 from django.db.models import Value as V
 
@@ -45,9 +45,9 @@ class AlunoForm(forms.ModelForm):
         fields = ['nome', 'sobrenome', 'CPF']
         exclude = ['user']
 
-class AtividadeForm(forms.ModelForm):
+class EventoForm(forms.ModelForm):
     class Meta:
-        model = Atividade
+        model = Evento
         fields = '__all__'
         exclude = ['ativo']
         widgets = {'data': DatePickerInput(), 'horario_fim': TimePickerInput(), 'horario_inicio': TimePickerInput()}
@@ -64,21 +64,21 @@ class AtividadeForm(forms.ModelForm):
         }
         return initial_data
 
-class EventoForm(forms.ModelForm):
+class AtividadeForm(forms.ModelForm):
     class Meta:
-        model = Evento
+        model = Atividade
         exclude = ['alunos', 'professores','data_cadastro']
 
 class AvaliacaoForm(forms.ModelForm):
     class Meta:
         model = Avaliacao
-        exclude = ['aluno', 'evento', "dataAvaliacao"]
+        exclude = ['aluno', 'atividade', "dataAvaliacao"]
 
-class AddParticipanteEventoForm(forms.Form):
+class AddParticipanteAtividadeForm(forms.Form):
     participante = forms.ModelChoiceField(queryset=Participante.objects.all(), label='Adicionar Participante')
 
-class AddAlunoEventoForm(forms.Form):
+class AddAlunoAtividadeForm(forms.Form):
     aluno = forms.ModelChoiceField(queryset=Aluno.objects.all(), label='Adicionar Aluno')
 
-class AddProfessorEventoForm(forms.Form):
+class AddProfessorAtividadeForm(forms.Form):
     professor = forms.ModelChoiceField(queryset=Professor.objects.all(), label='Adicionar Professor')
