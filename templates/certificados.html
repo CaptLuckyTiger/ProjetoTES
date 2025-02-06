@@ -13,13 +13,13 @@
                             <th>Data</th>
                             <th>Gerar</th>
                         </tr>
-                        {%for evento in eventos%}
+                        {%for atividade in atividades%}
                         <tr>
-                            <td>{{evento.id}}</td>
-                            <td>{{evento.tema}}</td>
-                            <td>{{evento.data}}</td>
+                            <td>{{atividade.id}}</td>
+                            <td>{{atividade.tema}}</td>
+                            <td>{{atividade.data}}</td>
                             <td>
-                                <a href="{%url 'downloadCertificado' pk_evento=evento.id pk_participante=user.id %}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                <a href="{%url 'downloadCertificado' pk_atividade=atividade.id pk_participante=user.id %}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
                             </td>
                         </tr>
                         {%endfor%}

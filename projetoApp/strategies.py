@@ -24,14 +24,14 @@ class ParticipanteDeleteStrategy(DeleteStrategy):
         item = get_object_or_404(Participante, id=id)
         item.delete()
 
-class EventoDeleteStrategy(DeleteStrategy):
-    def delete(self, id):
-        from .models import Evento
-        item = get_object_or_404(Evento, id=id)
-        item.delete()
-
 class AtividadeDeleteStrategy(DeleteStrategy):
     def delete(self, id):
         from .models import Atividade
         item = get_object_or_404(Atividade, id=id)
+        item.delete()
+
+class EventoDeleteStrategy(DeleteStrategy):
+    def delete(self, id):
+        from .models import Evento
+        item = get_object_or_404(Evento, id=id)
         item.delete()

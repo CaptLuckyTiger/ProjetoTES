@@ -17,9 +17,9 @@
                                     <input type="text" class="form-control" name="filter" placeholder="Tópico">
                                     <div class="col-auto ps-2">
                                         <select class="form-select" name="event" id="event">
-                                            <option value="-1" selected>Selecionar Atividade</option>
-                                            {%for atividade in atividades%}
-                                                <option value="{{atividade.id}}" >{{atividade.tema|slice:":30"}}</option>
+                                            <option value="-1" selected>Selecionar Evento</option>
+                                            {%for evento in eventos%}
+                                                <option value="{{evento.id}}" >{{evento.tema|slice:":30"}}</option>
                                             {%endfor%}
                                             
                                         </select>
@@ -47,7 +47,7 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_atividade=atividade.id pk_participante=participante.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=participante.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
                                         </form>
                                     </td>
                                 </tr>
@@ -61,7 +61,7 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_atividade=atividade.id pk_participante=aluno.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=aluno.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
                                         </form>
                                     </td>
                                 </tr>
@@ -75,7 +75,7 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_atividade=atividade.id pk_participante=professor.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=professor.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
                                         </form>
                                     </td>
                                 </tr>

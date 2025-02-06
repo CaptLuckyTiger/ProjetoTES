@@ -29,26 +29,26 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
     
 
-class AtividadeManager(models.Manager):
+class EventoManager(models.Manager):
     def get_home_event(self):
         dt = datetime.date.today()
-        atividade = self.filter(data__gte=dt, ativo=True).order_by('data').first()
-        if not atividade:
-            atividade = self.filter(data__lte=dt, ativo=True).order_by('data').first()
-            if not atividade:
+        evento = self.filter(data__gte=dt, ativo=True).order_by('data').first()
+        if not evento:
+            evento = self.filter(data__lte=dt, ativo=True).order_by('data').first()
+            if not evento:
                 raise Http404("Event does not exist")
-        return atividade
+        return evento
     
     def get_last_event(self):
         dt = datetime.date.today()
-        atividade = self.filter(data__lte=dt, ativo=True).order_by('data').first()
-        if not atividade:
+        evento = self.filter(data__lte=dt, ativo=True).order_by('data').first()
+        if not evento:
             raise Http404("Event does not exist")
-        return atividade
+        return evento
     
-    def get_filtered_atividade(self,filter):
-        atividades = self.filter(tema__icontains=filter).order_by('data')
-        return atividades
+    def get_filtered_evento(self,filter):
+        eventos = self.filter(tema__icontains=filter).order_by('data')
+        return eventos
 
 class ProfessorManager(models.Manager):
     def get_filtered_professor(self,filter):
@@ -56,7 +56,7 @@ class ProfessorManager(models.Manager):
         return professores
     
 class InscricaoManager(models.Manager):
-    def get_filtered_inscricao(self,filter,atividade):
+    def get_filtered_inscricao(self,filter,evento):
         inscricoes = self.annotate(full_name=Concat('participante__nome', V(" "), 'participante__sobrenome')).annotate(has_checkin=Count('checkin')).filter(full_name__icontains=filter).order_by('full_name')
         return inscricoes
     

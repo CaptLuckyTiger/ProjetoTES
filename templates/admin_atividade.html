@@ -19,12 +19,26 @@
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-primary me-2">Buscar</button>
                                     </div>
-                                    <input type="text" class="form-control" name="filter" placeholder="Tema">
+                                    <input type="text" class="form-control" name="filter" placeholder="Tópico">
+                                    <div class="col-auto ps-2">
+                                        <select class="form-select" name="event" id="event">
+                                            <option value="-1" selected>Todos Atividades</option>
+                                            {% for atividade in atividades %}
+                                                <option value="{{ atividade.id }}">{{ atividade.tema|slice:"0:30" }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-auto ps-2">
+                                        <select class="form-select" name="filter_by" id="filter_by">
+                                            <option value="id" selected>Minhas Atividades</option>
+                                            <option value="all">Todas Atividades</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </form>
                         </div>
-                        <div class="col col-auto p-0 ps-2 d-flex justify-content-end">
-                            <a type="button" class="btn btn-success" href="cadastrar">Novo</a>
+                        <div class="col-auto p-0 ps-2 d-flex justify-content-end">
+                            <a type="button" class="btn btn-success" href="cadastrar">Nova</a>
                         </div>
                     </div>
                     <div class="row">
@@ -33,19 +47,17 @@
                                 <thead>
                                     <tr>
                                         <th>#</th>
-                                        <th>Tema</th>
-                                        <th>Data</th>
+                                        <th>Tópico</th>
                                         <th>Operações</th>
+                                        <th>Visualizar</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for atividade in atividades %}
                                     <tr>
                                         <td>{{ atividade.id }}</td>
-                                        <td>{{ atividade.tema }}</td>
-                                        <td>{{ atividade.data }}</td>
+                                        <td><a href="{% url 'adminVisualizarAtividade' pk=atividade.id %}">{{ atividade.topico }}</a></td>
                                         <td>
-                                            <!-- Botão de Exclusão -->
                                             <button type="button"
                                                     class="btn btn-danger"
                                                     data-bs-toggle="modal"
@@ -55,9 +67,13 @@
                                                     data-id="{{ atividade.id }}">
                                                     <i class="bi bi-trash"></i>
                                             </button>
-                                            <!-- Botão de Edição -->
                                             <a href="{% url 'adminEditarAtividade' pk=atividade.id %}" class="btn btn-warning" alt="Editar">
-                                                <i class="bi bi-pencil-square"></i>
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'adminVisualizarAtividade' pk=atividade.id %}" class="btn btn-success" alt="Visualizar">
+                                                <i class="bi bi-eye"></i>
                                             </a>
                                         </td>
                                     </tr>
