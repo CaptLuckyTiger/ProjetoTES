@@ -163,28 +163,40 @@ def adminCadastrarEvento(request):
 
     return render(request, 'admin_evento_cadastrar.html', context)
 
-@login_required(login_url='login')
+@login_required(login_url="login")
 def adminEditarEvento(request, pk):
     if not request.user.validated:
         logout(request)
         return redirect('home')
     
-    context = {}
-    evento = get_object_or_404(Evento,pk=pk)
-    form = EventoForm(request.POST, instance=evento)
+    evento = get_object_or_404(Evento, pk=pk)
+    
     if request.method == "POST":
+        form = EventoForm(request.POST, instance=evento)
         if form.is_valid():
+            # Salva o evento
             evento = form.save()
-            #messages.success(request, f"Evento Cadastrada com sucesso!")
+
+            # Atualiza os horários das atividades
+            for atividade in evento.atividade_set.all():
+                horario_inicio = request.POST.get(f'horario_inicio_{atividade.id}')
+                horario_fim = request.POST.get(f'horario_fim_{atividade.id}')
+                
+                if horario_inicio and horario_fim:
+                    atividade.horario_inicio = horario_inicio
+                    atividade.horario_fim = horario_fim
+                    atividade.save()
+
+            messages.success(request, "Evento e atividades atualizados com sucesso!")
             return redirect('adminEvento')
-        else:
-            for error in list(form.errors.values()):
-                pass
+    else:
+        form = EventoForm(instance=evento)
 
-    context['form'] = EventoForm(instance=evento)    
-
+    context = {
+        'form': form,
+        'evento': evento,
+    }
     return render(request, 'admin_evento_editar.html', context)
-
 
 @login_required(login_url="login")
 def adminProfessores(request):
@@ -342,37 +354,41 @@ def adminCheckinInvalidar(request, pk_evento, pk_inscricao):
 
     return redirect('adminCheckin')
 
-@login_required(login_url="/login")    
+@login_required(login_url="/login")
 def adminAtividade(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-    professor = Professor.objects.filter(user = request.user).first()
+    
+    professor = Professor.objects.filter(user=request.user).first()
     context = {}
-    context["eventos"] = eventos = Atividade.objects.filter(ativo=1)
-    context["atividades"] = Atividade.objects.filter(professores__in=[professor])
+    context["eventos"] = Atividade.objects.filter(ativo=True)
+    context["atividades"] = Atividade.objects.filter(professores=professor)
 
     if 'filter' in request.GET:
-        if request.GET['event'] == "-1":
-            if request.GET['filter_by'] == "id":
-                context["atividades"] = Atividade.objects.filter(professores__in=[professor], topico__icontains=request.GET["filter"])
-            elif request.GET["filter_by"] == "all":
-                context["atividades"] = Atividade.objects.filter(topico__icontains=request.GET["filter"])
-            else:
-                return redirect(adminAtividade)
-        else:
-            if request.GET['filter_by'] == "id":
-                context["atividades"] = Atividade.objects.filter(atividade__pk=request.GET['event'], professores__in=[professor], topico__icontains=request.GET["filter"])
-            elif request.GET["filter_by"] == "all":
-                context["atividades"] = Atividade.objects.filter(atividade__pk=request.GET['event'], topico__icontains=request.GET["filter"])
-            else:
-                return redirect(adminAtividade)
-        return render(request, "admin_Atividade.html", context)
+        filter_value = request.GET['filter']
+        event_id = request.GET.get('event', '-1')
+        filter_by = request.GET.get('filter_by', 'id')
+
+        # Filtra por tópico
+        atividades = Atividade.objects.filter(topico__icontains=filter_value)
+
+        # Filtra por evento (se não for "Todos")
+        if event_id != '-1':
+            atividades = atividades.filter(evento__pk=event_id)
+
+        # Filtra por professor (se for "Minhas Atividades")
+        if filter_by == 'id':
+            atividades = atividades.filter(professores=professor)
+
+        context["atividades"] = atividades
+        return render(request, "admin_atividade.html", context)
 
     if 'pk_atividade' in request.POST:
         atividade = Atividade.objects.filter(pk=request.POST['pk_atividade']).first()
-        atividade.delete()
-        return redirect(adminAtividade)
+        if atividade:
+            atividade.delete()
+        return redirect('adminAtividade')
 
     return render(request, "admin_atividade.html", context)
 
@@ -706,35 +722,42 @@ def adminCertificado(request):
         return redirect('home')
 
     context = {}
-    # Obtendo o atividade atual
+    # Obtendo o evento atual
     context["evento"] = evento = Evento.objects.get_last_event()
 
-    # Lista de participantes, considerando check-ins
-    participantes_com_checkin = Participante.objects.filter(atividade__evento=evento).distinct()
+    # Lista de participantes e alunos com check-in
+    participantes_com_checkin = []
+    alunos_com_checkin = []
 
-    # Filtrando para incluir apenas os participantes com check-in
-    participantes_com_checkin = [
-        participante for participante in participantes_com_checkin
-        if CheckIn.objects.filter(inscricao__participante=participante).exists()
-    ]
-    
+    # Filtrar participantes com check-in
+    inscricoes_com_checkin = Inscricao.objects.filter(evento=evento, checkin__isnull=False).distinct()
+    participantes_com_checkin = [inscricao.participante for inscricao in inscricoes_com_checkin]
+
+    # Filtrar alunos com check-in (se houver um modelo separado para alunos)
+    alunos_com_checkin = [inscricao.participante for inscricao in inscricoes_com_checkin if hasattr(inscricao.participante, 'aluno')]
+
     context["participantes"] = participantes_com_checkin
-    context["alunos"] = Aluno.objects.filter(atividade__evento=evento).distinct()
-    context["professores"] = Professor.objects.filter(atividade__evento=evento).distinct()
+    context["alunos"] = alunos_com_checkin
     context["eventos"] = Evento.objects.filter(ativo=1, data__lte=date.today())
 
     # Filtro baseado em parâmetros da URL
     if 'filter' in request.GET:
-        if request.GET['event'] == "-1":
-            context["participantes"] = Participante.objects.get_filtered_participante(request.GET['filter']).filter(atividade__evento=evento)
-            context["alunos"] = Aluno.objects.get_filtered_aluno(request.GET['filter']).filter(atividade__evento=evento)
-            context["professores"] = Professor.objects.get_filtered_professor(request.GET['filter']).filter(atividade__evento=evento)
-        else:
-            context["participantes"] = Participante.objects.get_filtered_participante(request.GET['filter']).filter(atividade__evento=request.GET['event'])
-            context["alunos"] = Aluno.objects.get_filtered_aluno(request.GET['filter']).filter(atividade__evento=request.GET['event'])
-            context["professores"] = Professor.objects.get_filtered_professor(request.GET['filter']).filter(atividade__evento=request.GET['event'])
+        filter_value = request.GET['filter']
+        event_id = request.GET.get('event', "-1")
 
-        return render(request, "admin_certificados.html", context)
+        if event_id == "-1":
+            # Filtrar participantes e alunos com check-in para o evento atual
+            participantes_filtrados = [p for p in participantes_com_checkin if filter_value.lower() in p.nome.lower() or filter_value.lower() in p.sobrenome.lower()]
+            alunos_filtrados = [a for a in alunos_com_checkin if filter_value.lower() in a.nome.lower() or filter_value.lower() in a.sobrenome.lower()]
+        else:
+            # Filtrar participantes e alunos com check-in para o evento selecionado
+            evento_selecionado = Evento.objects.get(id=event_id)
+            inscricoes_filtradas = Inscricao.objects.filter(evento=evento_selecionado, checkin__isnull=False).distinct()
+            participantes_filtrados = [inscricao.participante for inscricao in inscricoes_filtradas if filter_value.lower() in inscricao.participante.nome.lower() or filter_value.lower() in inscricao.participante.sobrenome.lower()]
+            alunos_filtrados = [inscricao.participante for inscricao in inscricoes_filtradas if hasattr(inscricao.participante, 'aluno') and (filter_value.lower() in inscricao.participante.nome.lower() or filter_value.lower() in inscricao.participante.sobrenome.lower())]
+
+        context["participantes"] = participantes_filtrados
+        context["alunos"] = alunos_filtrados
 
     return render(request, "admin_certificados.html", context)
 
