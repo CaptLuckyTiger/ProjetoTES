@@ -66,20 +66,6 @@
                                     </td>
                                 </tr>
                                 {%endfor%}
-                                {%for professor in professores%}
-                                <tr>
-                                    <td>{{professor.id}}</td>
-                                    <td>{{professor.nome}}</td>
-                                    <td>{{professor.sobrenome}}</td>
-                                    <td>{{professor.CPF}}</td>
-                                    <td>
-                                        <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
-                                            {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=professor.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {%endfor%}
                             </table>
                         </div>
                     </div>

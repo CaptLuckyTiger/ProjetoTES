@@ -1,9 +1,9 @@
 <html>
-    {%include 'header_admin.html'%}
-    {%load bootstrap5%}
+    {% include 'header_admin.html' %}
+    {% load bootstrap5 %}
     <div class="container-fluid">
         <div class="row flex-nowrap">
-            {%include 'sidebar.html'%}
+            {% include 'sidebar.html' %}
             <main class="col py-3">
                 <div class="text-center mb-4">
                     <h3>Editar Evento</h3>
@@ -11,8 +11,46 @@
                 <div class="container d-flex align-items-center justify-content-center">
                     <form class="form-floating w-75" method="POST">
                         {% csrf_token %}
-                        {% bootstrap_form form %}
-                        <input type="submit" class="btn btn-lg btn-primary mt-3 mb-3 w-100 " value="Salvar">
+                        
+                        <!-- Campos do formulário -->
+                        {% bootstrap_field form.tema %}
+                        {% bootstrap_field form.descricao %}
+                        
+                        <!-- Exibe as atividades vinculadas -->
+                        <div class="mt-4">
+                            <h4>Atividades Vinculadas</h4>
+                            <ul class="list-group">
+                                {% for atividade in form.instance.atividade_set.all %}
+                                    {% if atividade.ativo %}  <!-- Filtra apenas atividades ativas -->
+                                        <li class="list-group-item">
+                                            <strong>{{ atividade.topico }}</strong>  <!-- Exibe o tópico da atividade -->
+                                            <div class="mt-2">
+                                                <label for="horario_inicio_{{ atividade.id }}">Horário Início:</label>
+                                                <input type="time" id="horario_inicio_{{ atividade.id }}" name="horario_inicio_{{ atividade.id }}" value="{{ atividade.horario_inicio|time:'H:i' }}" class="form-control">
+                                            </div>
+                                            <div class="mt-2">
+                                                <label for="horario_fim_{{ atividade.id }}">Horário Fim:</label>
+                                                <input type="time" id="horario_fim_{{ atividade.id }}" name="horario_fim_{{ atividade.id }}" value="{{ atividade.horario_fim|time:'H:i' }}" class="form-control">
+                                            </div>
+                                        </li>
+                                    {% endif %}
+                                {% empty %}
+                                    <li class="list-group-item">Nenhuma atividade vinculada.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                        <!-- Outros campos do formulário -->
+                        {% bootstrap_field form.data %}
+                        {% bootstrap_field form.horario_inicio %}
+                        {% bootstrap_field form.horario_fim %}
+                        {% bootstrap_field form.logradouro %}
+                        {% bootstrap_field form.bairro %}
+                        {% bootstrap_field form.cidade %}
+                        {% bootstrap_field form.estado %}
+                        {% bootstrap_field form.banner %}
+
+                        <input type="submit" class="btn btn-lg btn-primary mt-3 mb-3 w-100" value="Salvar">
                     </form>
                 </div>
             </main>

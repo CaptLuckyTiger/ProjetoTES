@@ -1,6 +1,7 @@
 
 from django import forms
 from .models import CustomUser, Participante, Professor, Aluno, Atividade, Evento, Avaliacao
+from django.utils.safestring import mark_safe
 from bootstrap_datepicker_plus.widgets import TimePickerInput, DatePickerInput
 from django.db.models import Value as V
 
@@ -46,14 +47,37 @@ class AlunoForm(forms.ModelForm):
         exclude = ['user']
 
 class EventoForm(forms.ModelForm):
+    atividades = forms.ModelMultipleChoiceField(
+        queryset=Atividade.objects.none(),  # Inicialmente vazio
+        widget=forms.CheckboxSelectMultiple,  # Usa checkboxes para seleção múltipla
+        required=False,  # Não é obrigatório
+    )
+
     class Meta:
         model = Evento
         fields = '__all__'
         exclude = ['ativo']
-        widgets = {'data': DatePickerInput(), 'horario_fim': TimePickerInput(), 'horario_inicio': TimePickerInput()}
-    
-    def get_inital_data():
-        initial_data = {
+        widgets = {
+            'data': DatePickerInput(),  # Usa o DatePickerInput para o campo 'data'
+            'horario_inicio': TimePickerInput(),  # Usa o TimePickerInput para 'horario_inicio'
+            'horario_fim': TimePickerInput(),  # Usa o TimePickerInput para 'horario_fim'
+        }
+        labels = {
+            'tema': mark_safe('<strong>Tema</strong>'),
+            'descricao': mark_safe('<strong>Descrição</strong>'),
+            'data': mark_safe('<strong>Data</strong>'),
+            'horario_inicio': mark_safe('<strong>Horário Início</strong>'),
+            'horario_fim': mark_safe('<strong>Horário Fim</strong>'),
+            'logradouro': mark_safe('<strong>Logradouro</strong>'),
+            'bairro': mark_safe('<strong>Bairro</strong>'),
+            'cidade': mark_safe('<strong>Cidade</strong>'),
+            'estado': mark_safe('<strong>UF</strong>'),
+            'banner': mark_safe('<strong>Banner</strong>'),
+        }
+
+    def get_initial_data(self):
+        """Retorna os valores iniciais padrão para o formulário."""
+        return {
             'horario_inicio': "8:00",
             'horario_fim': "18:00",
             'logradouro': "R. Pref. Brásílio Ribas, 775",
@@ -62,12 +86,15 @@ class EventoForm(forms.ModelForm):
             'estado': "Paraná",
             'banner': "https://www.lifecaretechnology.com/wp-content/uploads/2018/12/default-banner.jpg",
         }
-        return initial_data
 
 class AtividadeForm(forms.ModelForm):
     class Meta:
         model = Atividade
         exclude = ['alunos', 'professores','data_cadastro']
+        widgets = {
+            'horario_inicio': TimePickerInput(),
+            'horario_fim': TimePickerInput(),
+        }
 
 class AvaliacaoForm(forms.ModelForm):
     class Meta:
