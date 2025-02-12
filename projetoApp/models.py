@@ -96,11 +96,12 @@ class Inscricao(models.Model):
     
 class CheckIn(models.Model):
     dataHora = models.DateTimeField(verbose_name="Horario")
-    inscricao = models.ForeignKey(Inscricao, on_delete=models.CASCADE)
+    inscricao = models.ForeignKey(Inscricao, on_delete=models.CASCADE, null=True, blank=True)
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=True, blank=True)
+    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=True, blank=True)
 
 class Certificado(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE)
     dataEmissao = models.DateField(verbose_name="Data Emissão", null = False)
     codigo = models.CharField(verbose_name="Código", max_length=255, blank=True)
-    
