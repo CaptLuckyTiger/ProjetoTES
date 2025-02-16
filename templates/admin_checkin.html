@@ -44,14 +44,14 @@
                                         <td>{{ inscricao_info.inscricao.dataHora }}</td>
                                         <td>
                                             {% if not inscricao_info.has_checkin %}
-                                            <form method="POST" action="{% url 'adminCheckinValidar' pk_evento=evento.id pk_inscricao=inscricao_info.inscricao.id %}">
+                                            <form method="POST" action="{% url 'adminCheckinValidarParticipante' pk_evento=evento.id pk_inscricao=inscricao_info.inscricao.id %}">
                                                 {% csrf_token %}
                                                     <button type="submit" class="btn btn-secondary" alt="Validar">
                                                         <i class="bi bi-square"></i>
                                                     </button>
                                             </form>
                                                 {% else %}
-                                                <form method="POST" action="{% url 'adminCheckinInvalidar' pk_evento=evento.id pk_inscricao=inscricao_info.inscricao.id %}">
+                                                <form method="POST" action="{% url 'adminCheckinInvalidarParticipante' pk_evento=evento.id pk_inscricao=inscricao_info.inscricao.id %}">
                                                     {% csrf_token %}
                                                         <button type="submit" class="btn btn-success" alt="Invalidar">
                                                             <i class="bi bi-check2-square"></i>

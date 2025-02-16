@@ -8,9 +8,10 @@ from datetime import date, datetime
 from django.contrib import messages
 from .handlers import *
 from .strategies import *
-from .forms import CustomUserForm, ParticipanteForm, AtividadeForm, ProfessorForm, EventoForm, AddParticipanteAtividadeForm, AddAlunoAtividadeForm, AddProfessorAtividadeForm, AlunoForm, AvaliacaoForm
+from .forms import *
 from .models import *
 from .certificate import generateCertificado
+from .handlers import ParticipanteCheckInHandler, AlunoCheckInHandler
 
 STRATEGIES = {
     'aluno': AlunoDeleteStrategy(),
@@ -372,65 +373,37 @@ def adminCheckin(request):
     return render(request, "admin_checkin.html", context)
 
 @login_required(login_url="/login")
-def adminCheckinValidar(request, pk_evento, pk_inscricao):
-    if not request.user.validated:
-        logout(request)
-        return redirect('home')
-
-    evento = get_object_or_404(Evento, pk=pk_evento)
-    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, evento=evento)
-
-    if not CheckIn.objects.filter(inscricao=inscricao).exists():
-        CheckIn.objects.create(inscricao=inscricao, dataHora=datetime.now())
-
-    return redirect('adminCheckin')
-
-@login_required(login_url="/login")
-def adminCheckinInvalidar(request, pk_evento, pk_inscricao):
-    if not request.user.validated:
-        logout(request)
-        return redirect('home')
-
-    evento = get_object_or_404(Evento, pk=pk_evento)
-    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, evento=evento)
-
-    checkin = CheckIn.objects.filter(inscricao=inscricao).first()
-    if checkin:
-        checkin.delete()
-
-    return redirect('adminCheckin')
-
-@login_required(login_url="/login")
 def adminCheckinValidarAluno(request, pk_evento, pk_aluno):
     if not request.user.validated:
         logout(request)
         return redirect('home')
+    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno)
+    return handler.validar()
 
-    # Obter o aluno e a atividade relacionada
-    aluno = get_object_or_404(Aluno, id=pk_aluno)
-    atividade = get_object_or_404(Atividade, evento_id=pk_evento, alunos=aluno)
-
-    # Criar o check-in
-    CheckIn.objects.create(
-        dataHora=timezone.now(),
-        aluno=aluno,
-        atividade=atividade
-    )
-    return redirect('adminCheckin')
+@login_required(login_url="/login")
+def adminCheckinValidarParticipante(request, pk_evento, pk_inscricao):
+    if not request.user.validated:
+        logout(request)
+        return redirect('home')
+    handler = get_checkin_handler('participante', request, pk_evento, pk_inscricao)
+    return handler.validar()
 
 @login_required(login_url="/login")
 def adminCheckinInvalidarAluno(request, pk_evento, pk_aluno):
     if not request.user.validated:
         logout(request)
         return redirect('home')
+    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno)
+    return handler.invalidar()
 
-    # Obter o aluno e a atividade relacionada
-    aluno = get_object_or_404(Aluno, id=pk_aluno)
-    atividade = get_object_or_404(Atividade, evento_id=pk_evento, alunos=aluno)
+@login_required(login_url="/login")
+def adminCheckinInvalidarParticipante(request, pk_evento, pk_inscricao):
+    if not request.user.validated:
+        logout(request)
+        return redirect('home')
+    handler = get_checkin_handler('participante', request, pk_evento, pk_inscricao)
+    return handler.invalidar()
 
-    # Remover o check-in
-    CheckIn.objects.filter(aluno=aluno, atividade=atividade).delete()
-    return redirect('adminCheckin')
 
 @login_required(login_url="/login")
 def adminAtividade(request):
