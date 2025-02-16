@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
     {% include 'header_admin.html' %}
-    {% include 'modal_confirmacao.html' %}
     {% load bootstrap5 %}
 </head>
 <body>
@@ -29,12 +28,14 @@
                     </div>
                     <div class="row">
                         <div class="table-responsive border" style="height: 20em; overflow-y: auto;">
+                            <!-- Tabela de Eventos -->
                             <table class="table">
                                 <thead>
                                     <tr>
                                         <th>#</th>
                                         <th>Tema</th>
                                         <th>Data</th>
+                                        <th>Status</th>
                                         <th>Operações</th>
                                     </tr>
                                 </thead>
@@ -45,16 +46,24 @@
                                         <td>{{ evento.tema }}</td>
                                         <td>{{ evento.data }}</td>
                                         <td>
-                                            <!-- Botão de Exclusão -->
-                                            <button type="button"
-                                                    class="btn btn-danger"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#confirmDeleteModal"
-                                                    data-model="evento"
-                                                    alt="Apagar"
-                                                    data-id="{{ evento.id }}">
-                                                    <i class="bi bi-trash"></i>
-                                            </button>
+                                            {% if evento.ativo %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inativo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <!-- Botão de Desativar/Reativar -->
+                                            {% if evento.ativo %}
+                                                <a href="{% url 'adminDesativarEvento' pk=evento.id %}" class="btn btn-danger" alt="Desativar">
+                                                    <i class="bi bi-power"></i>
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'adminReativarEvento' pk=evento.id %}" class="btn btn-success" alt="Reativar">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </a>
+                                            {% endif %}
+                                            
                                             <!-- Botão de Edição -->
                                             <a href="{% url 'adminEditarEvento' pk=evento.id %}" class="btn btn-warning" alt="Editar">
                                                 <i class="bi bi-pencil-square"></i>
