@@ -1,7 +1,7 @@
 # [x] Adicionar modal para confirmação de ações destrutivas -> utilizado Strategy
 - Augusto
 
-# [] Controle de presença -> utilizado Template Method
+# [x] Controle de presença -> utilizado Template Method
 - Augusto
 
 # [] Adicionar cadastro de instituições visitantes
