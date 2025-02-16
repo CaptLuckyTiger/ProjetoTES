@@ -77,9 +77,11 @@ class Atividade(models.Model):
 
 class Avaliacao(models.Model):
     dataAvaliacao = models.DateField(verbose_name="Data Avaliação", null=False)
-    descricao = models.TextField(verbose_name="Decrição", blank=False)
+    descricao = models.TextField(verbose_name="Descrição", blank=False)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=False)
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False)
+    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False, default=1)  # Set a default value here
+
+
 
 class Convite(models.Model):
     emailDst = models.EmailField(verbose_name="Email")
@@ -97,8 +99,9 @@ class Inscricao(models.Model):
 class CheckIn(models.Model):
     dataHora = models.DateTimeField(verbose_name="Horario")
     inscricao = models.ForeignKey(Inscricao, on_delete=models.CASCADE, null=True, blank=True)
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=True, blank=True)
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=True, blank=True, to_field='usuario_ptr_id')
     atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=True, blank=True)
+
 
 class Certificado(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
