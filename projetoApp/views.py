@@ -129,7 +129,7 @@ def adminEvento(request):
         logout(request)
         return redirect('home')
     context = {}
-    eventos = Evento.objects.filter(ativo=True).order_by('data')
+    eventos = Evento.objects.all().order_by('data')
     context['eventos'] = eventos
     if 'filter' in request.GET:
         context['eventos'] = Evento.objects.get_filtered_evento(request.GET['filter'])
@@ -201,6 +201,32 @@ def adminEditarEvento(request, pk):
         'evento': evento,
     }
     return render(request, 'admin_evento_editar.html', context)
+
+@login_required(login_url="/login")
+def adminDesativarEvento(request, pk):
+    if not request.user.validated:
+        logout(request)
+        return redirect('home')
+
+    evento = get_object_or_404(Evento, id=pk)
+    evento.ativo = False  # Desativa o evento
+    evento.save()
+
+    messages.success(request, f"Evento '{evento.tema}' desativado com sucesso.")
+    return redirect('adminEvento')
+
+@login_required(login_url="/login")
+def adminReativarEvento(request, pk):
+    if not request.user.validated:
+        logout(request)
+        return redirect('home')
+
+    evento = get_object_or_404(Evento, id=pk)
+    evento.ativo = True  # Reativa o evento
+    evento.save()
+
+    messages.success(request, f"Evento '{evento.tema}' reativado com sucesso.")
+    return redirect('adminEvento')
 
 @login_required(login_url="login")
 def adminProfessores(request):

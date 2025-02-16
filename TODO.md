@@ -11,7 +11,7 @@
 - Mizael
 
 -----------------------------------------------------------------
-# [] Adicionar cadastro de temas -> evento
+# [x] Adicionar cadastro de temas -> evento
 - Augusto
 
 Exemplo: Mostra de sustentabilidade
