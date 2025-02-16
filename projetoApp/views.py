@@ -695,6 +695,9 @@ def adminAvaliar(request, pk_atividade, pk_aluno):
     aluno = get_object_or_404(Aluno, pk=pk_aluno)
     atividade = get_object_or_404(Atividade, pk=pk_atividade)
     
+    # Verifica se o aluno já realizou check-in na atividade
+    checkin_exists = CheckIn.objects.filter(aluno=aluno, atividade=atividade).exists()
+    
     avaliacoes = Avaliacao.objects.filter(aluno=aluno, atividade=atividade)
     
     if 'filter' in request.GET:
@@ -715,6 +718,7 @@ def adminAvaliar(request, pk_atividade, pk_aluno):
         'aluno': aluno,
         'atividade': atividade,
         'avaliacoes': avaliacoes,
+        'checkin_exists': checkin_exists,
     }
     
     return render(request, 'admin_avaliar_aluno.html', context)
