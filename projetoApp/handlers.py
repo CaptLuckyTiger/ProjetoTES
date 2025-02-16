@@ -102,15 +102,19 @@ class ParticipanteCheckInHandler(CheckInHandler):
 
 # Subclasse para check-in de alunos vinculados a atividades
 class AlunoCheckInHandler(CheckInHandler):
+    def __init__(self, request, evento_id, entity_id, pk_atividade):
+        super().__init__(request, evento_id, entity_id)
+        self.pk_atividade = pk_atividade  # Adiciona o ID da atividade
+
     def entity_type(self):
         return 'aluno'
 
     def _get_object(self):
         """Obtém o aluno e a atividade relacionada.
-           Aqui, 'entity_id' é o ID do aluno.
+           Aqui, 'entity_id' é o ID do aluno, e 'pk_atividade' é o ID da atividade.
         """
         aluno = get_object_or_404(Aluno, id=self.entity_id)
-        atividade = get_object_or_404(Atividade, evento_id=self.evento_id, alunos=aluno)
+        atividade = get_object_or_404(Atividade, id=self.pk_atividade, evento_id=self.evento_id, alunos=aluno)
         return aluno, atividade
 
     def _create_checkin_params(self):
@@ -132,12 +136,11 @@ class AlunoCheckInHandler(CheckInHandler):
         return redirect('adminCheckin')
 
 
-# Função fábrica para instanciar a estratégia correta
-def get_checkin_handler(model_type, request, evento_id, entity_id):
+def get_checkin_handler(model_type, request, evento_id, entity_id, pk_atividade=None):
     model_type = model_type.lower()
     if model_type == 'participante':
         return ParticipanteCheckInHandler(request, evento_id, entity_id)
     elif model_type == 'aluno':
-        return AlunoCheckInHandler(request, evento_id, entity_id)
+        return AlunoCheckInHandler(request, evento_id, entity_id, pk_atividade)
     else:
         raise ValueError("Tipo de entidade não suportado para check-in.")
