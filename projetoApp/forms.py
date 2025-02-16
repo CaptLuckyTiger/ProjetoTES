@@ -94,6 +94,7 @@ class AtividadeForm(forms.ModelForm):
         widgets = {
             'horario_inicio': TimePickerInput(),
             'horario_fim': TimePickerInput(),
+            'capacidade_maxima': forms.NumberInput(attrs={'min': 1}),
         }
 
 class AvaliacaoForm(forms.ModelForm):

@@ -8,9 +8,10 @@ from datetime import date, datetime
 from django.contrib import messages
 from .handlers import *
 from .strategies import *
-from .forms import CustomUserForm, ParticipanteForm, AtividadeForm, ProfessorForm, EventoForm, AddParticipanteAtividadeForm, AddAlunoAtividadeForm, AddProfessorAtividadeForm, AlunoForm, AvaliacaoForm
+from .forms import *
 from .models import *
 from .certificate import generateCertificado
+from .handlers import ParticipanteCheckInHandler, AlunoCheckInHandler
 
 STRATEGIES = {
     'aluno': AlunoDeleteStrategy(),
@@ -182,10 +183,12 @@ def adminEditarEvento(request, pk):
             for atividade in evento.atividade_set.all():
                 horario_inicio = request.POST.get(f'horario_inicio_{atividade.id}')
                 horario_fim = request.POST.get(f'horario_fim_{atividade.id}')
+                capacidade_maxima = request.POST.get(f'capacidade_maxima_{atividade.id}')
                 
-                if horario_inicio and horario_fim:
+                if horario_inicio and horario_fim and capacidade_maxima:
                     atividade.horario_inicio = horario_inicio
                     atividade.horario_fim = horario_fim
+                    atividade.capacidade_maxima = capacidade_maxima
                     atividade.save()
 
             messages.success(request, "Evento e atividades atualizados com sucesso!")
@@ -334,19 +337,26 @@ def adminCheckin(request):
         })
     context["inscricoes_com_checkin"] = inscricoes_com_checkin
 
-    # Lista de alunos vinculados a atividades do evento
+    # Lista de atividades do evento
     atividades_do_evento = Atividade.objects.filter(evento=evento)
-    alunos_vinculados = Aluno.objects.filter(atividade__in=atividades_do_evento).distinct()
+    context["atividades"] = atividades_do_evento
 
-    # Verificar se cada aluno já possui check-in
-    alunos_com_checkin = []
-    for aluno in alunos_vinculados:
-        has_checkin = CheckIn.objects.filter(aluno=aluno, atividade__evento=evento).exists()
-        alunos_com_checkin.append({
-            'aluno': aluno,
-            'has_checkin': has_checkin
+    # Agrupar alunos por atividade
+    alunos_por_atividade = []
+    for atividade in atividades_do_evento:
+        alunos_vinculados = atividade.alunos.all()  # Usando o related_name da relação ManyToMany
+        alunos_com_checkin = []
+        for aluno in alunos_vinculados:
+            has_checkin = CheckIn.objects.filter(aluno=aluno, atividade=atividade).exists()
+            alunos_com_checkin.append({
+                'aluno': aluno,
+                'has_checkin': has_checkin
+            })
+        alunos_por_atividade.append({
+            'atividade': atividade,
+            'alunos': alunos_com_checkin
         })
-    context["alunos_com_checkin"] = alunos_com_checkin
+    context["alunos_por_atividade"] = alunos_por_atividade
 
     # Filtro baseado em parâmetros da URL
     if 'filter' in request.GET:
@@ -359,76 +369,55 @@ def adminCheckin(request):
         ]
         context["inscricoes_com_checkin"] = inscricoes_filtradas
 
-        # Filtrar alunos vinculados
-        alunos_filtrados = [
-            aluno_info for aluno_info in alunos_com_checkin
-            if filter_value.lower() in aluno_info['aluno'].nome.lower() or
-               filter_value.lower() in aluno_info['aluno'].sobrenome.lower()
-        ]
-        context["alunos_com_checkin"] = alunos_filtrados
+        # Filtrar alunos por atividade
+        atividades_filtradas = []
+        for atividade_info in alunos_por_atividade:
+            alunos_filtrados = [
+                aluno_info for aluno_info in atividade_info['alunos']
+                if filter_value.lower() in aluno_info['aluno'].nome.lower() or
+                   filter_value.lower() in aluno_info['aluno'].sobrenome.lower()
+            ]
+            if alunos_filtrados:
+                atividades_filtradas.append({
+                    'atividade': atividade_info['atividade'],
+                    'alunos': alunos_filtrados
+                })
+        context["alunos_por_atividade"] = atividades_filtradas
 
     return render(request, "admin_checkin.html", context)
 
 @login_required(login_url="/login")
-def adminCheckinValidar(request, pk_evento, pk_inscricao):
+def adminCheckinValidarAluno(request, pk_evento, pk_aluno, pk_atividade):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-
-    evento = get_object_or_404(Evento, pk=pk_evento)
-    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, evento=evento)
-
-    if not CheckIn.objects.filter(inscricao=inscricao).exists():
-        CheckIn.objects.create(inscricao=inscricao, dataHora=datetime.now())
-
-    return redirect('adminCheckin')
+    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno, pk_atividade)
+    return handler.validar()
 
 @login_required(login_url="/login")
-def adminCheckinInvalidar(request, pk_evento, pk_inscricao):
+def adminCheckinValidarParticipante(request, pk_evento, pk_inscricao):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-
-    evento = get_object_or_404(Evento, pk=pk_evento)
-    inscricao = get_object_or_404(Inscricao, pk=pk_inscricao, evento=evento)
-
-    checkin = CheckIn.objects.filter(inscricao=inscricao).first()
-    if checkin:
-        checkin.delete()
-
-    return redirect('adminCheckin')
+    handler = get_checkin_handler('participante', request, pk_evento, pk_inscricao)
+    return handler.validar()
 
 @login_required(login_url="/login")
-def adminCheckinValidarAluno(request, pk_evento, pk_aluno):
+def adminCheckinInvalidarAluno(request, pk_evento, pk_aluno, pk_atividade):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-
-    # Obter o aluno e a atividade relacionada
-    aluno = get_object_or_404(Aluno, id=pk_aluno)
-    atividade = get_object_or_404(Atividade, evento_id=pk_evento, alunos=aluno)
-
-    # Criar o check-in
-    CheckIn.objects.create(
-        dataHora=timezone.now(),
-        aluno=aluno,
-        atividade=atividade
-    )
-    return redirect('adminCheckin')
+    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno, pk_atividade)
+    return handler.invalidar()
 
 @login_required(login_url="/login")
-def adminCheckinInvalidarAluno(request, pk_evento, pk_aluno):
+def adminCheckinInvalidarParticipante(request, pk_evento, pk_inscricao):
     if not request.user.validated:
         logout(request)
         return redirect('home')
+    handler = get_checkin_handler('participante', request, pk_evento, pk_inscricao)
+    return handler.invalidar()
 
-    # Obter o aluno e a atividade relacionada
-    aluno = get_object_or_404(Aluno, id=pk_aluno)
-    atividade = get_object_or_404(Atividade, evento_id=pk_evento, alunos=aluno)
-
-    # Remover o check-in
-    CheckIn.objects.filter(aluno=aluno, atividade=atividade).delete()
-    return redirect('adminCheckin')
 
 @login_required(login_url="/login")
 def adminAtividade(request):
@@ -720,6 +709,9 @@ def adminAvaliar(request, pk_atividade, pk_aluno):
     aluno = get_object_or_404(Aluno, pk=pk_aluno)
     atividade = get_object_or_404(Atividade, pk=pk_atividade)
     
+    # Verifica se o aluno já realizou check-in na atividade
+    checkin_exists = CheckIn.objects.filter(aluno=aluno, atividade=atividade).exists()
+    
     avaliacoes = Avaliacao.objects.filter(aluno=aluno, atividade=atividade)
     
     if 'filter' in request.GET:
@@ -740,6 +732,7 @@ def adminAvaliar(request, pk_atividade, pk_aluno):
         'aluno': aluno,
         'atividade': atividade,
         'avaliacoes': avaliacoes,
+        'checkin_exists': checkin_exists,
     }
     
     return render(request, 'admin_avaliar_aluno.html', context)

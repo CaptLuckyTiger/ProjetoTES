@@ -1,7 +1,7 @@
-# [x] Adicionar modal para confirmação de ações destrutivas
+# [x] Adicionar modal para confirmação de ações destrutivas -> utilizado Strategy
 - Augusto
 
-# [] Controle de presença
+# [x] Controle de presença -> utilizado Template Method
 - Augusto
 
 # [] Adicionar cadastro de instituições visitantes
@@ -23,11 +23,11 @@ Exemplo: Mostra de sustentabilidade
 ## [] EVENTO
 - Augusto
 
-. alterar horario - adicionar matutino e verspertino
-. adicionar intervalos por horários para visitantes (qtd maxima)
-. upload de banner
-. adicionar quantidade maxima de participantes por horário
-. retirar a remoção de eventos -> desabilitar (só depois que ocorreu)
+. alterar horario - adicionar matutino e verspertino [x]
+. adicionar intervalos por horários para visitantes (qtd maxima) [x]
+. upload de banner []
+. adicionar quantidade maxima de participantes por horário [x]
+. retirar a remoção de eventos -> desabilitar (só depois que ocorreu) []
 
 ## [] PARTICIPANTE
 - Mizael
@@ -43,7 +43,7 @@ Exemplo: Mostra de sustentabilidade
 ## [] ALUNO
 - Augusto
 
-. desenvolveu as atividades previstas do tópico -> cumpriu as atividades?
+. desenvolveu as atividades previstas do tópico -> cumpriu as atividades?  [x]
 
 ### [] Adicionar proxy (possivelmente) para gerenciamento de templates de certificados
 . adicionar proxy para gerenciamento de templates de certificados

@@ -32,6 +32,10 @@
                                                 <label for="horario_fim_{{ atividade.id }}">Horário Fim:</label>
                                                 <input type="time" id="horario_fim_{{ atividade.id }}" name="horario_fim_{{ atividade.id }}" value="{{ atividade.horario_fim|time:'H:i' }}" class="form-control">
                                             </div>
+                                            <div class="mt-2">
+                                                <label for="capacidade_maxima_{{ atividade.id }}">Capacidade máxima:</label>
+                                                <input type="number" id="capacidade_maxima_{{ atividade.id }}" name="capacidade_maxima_{{ atividade.id }}" value="{{ atividade.capacidade_maxima}}" class="form-control">
+                                            </div>
                                         </li>
                                     {% endif %}
                                 {% empty %}
