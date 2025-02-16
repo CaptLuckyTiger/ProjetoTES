@@ -11,10 +11,10 @@ from django.contrib.auth import logout
 from .models import CheckIn, Inscricao, Aluno, Atividade
 
 class CheckInHandler(ABC):
-    def __init__(self, request, evento_id, user_id):
+    def __init__(self, request, evento_id, entity_id):
         self.request = request
         self.evento_id = evento_id
-        self.user_id = user_id
+        self.entity_id = entity_id
 
     def _check_authentication(self):
         """Verifica se o usuário está autenticado e validado."""

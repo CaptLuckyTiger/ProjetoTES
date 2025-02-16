@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from localflavor.br.models import BRCPFField
 from .managers import CustomUserManager, EventoManager, ProfessorManager, InscricaoManager, ParticipanteManager, AlunoManager
 from datetime import date, datetime
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 class CustomUser(AbstractUser):
@@ -40,9 +41,9 @@ class Professor(Usuario):
     objects = ProfessorManager()
 
 class Evento(models.Model):
-    tema = models.CharField(verbose_name = "Tema", max_length = 255, blank = False)
+    tema = models.CharField(verbose_name = "Tema", max_length = 255, blank = False, default="Evento")
     descricao = models.TextField(verbose_name = "Descrição", blank = False)
-    data = models.DateField(verbose_name = "Data", null = False)
+    data = models.DateField(verbose_name = "Data", null = False, default=date.today)
     horario_inicio = models.TimeField(verbose_name = "Horario Inicio", blank = True,default="8:00")
     horario_fim = models.TimeField(verbose_name= "Horario Fim", blank = True, default="18:00")
     logradouro = models.CharField(verbose_name= "Logradouro", max_length=255, blank=False, default="R. Pref. Brásílio Ribas, 775")
@@ -74,17 +75,43 @@ class Atividade(models.Model):
     data_cadastro = models.DateField(verbose_name="Data Criação", default=date.today)
     horario_inicio = models.TimeField(verbose_name="Horário Início", blank=True, null=True)
     horario_fim = models.TimeField(verbose_name="Horário Fim", blank=True, null=True)
+    capacidade_maxima = models.PositiveIntegerField(verbose_name="Capacidade Máxima", default=0, help_text="Número máximo de pessoas na atividade")
+
+    @property
+    def vagas_restantes(self):
+        total_inscritos = self.participantes.count() + self.alunos.count()
+        return self.capacidade_maxima - total_inscritos
+
+    def checar_disponibilidade(self):
+        return self.vagas_restantes > 0
+
+    def clean(self):
+        super().clean()
+        total_inscritos = self.participantes.count() + self.alunos.count()
+        if self.capacidade_maxima < total_inscritos:
+            raise ValidationError(
+                f"A capacidade não pode ser menor que o número atual de inscritos ({total_inscritos})"
+            )
+    def adicionar_participante(self, participante):
+        if not self.checar_disponibilidade():
+            raise ValidationError("Não há vagas disponíveis nesta atividade")
+        self.participantes.add(participante)
+
+    def adicionar_aluno(self, aluno):
+        if not self.checar_disponibilidade():
+            raise ValidationError("Não há vagas disponíveis nesta atividade")
+        self.alunos.add(aluno)
 
 class Avaliacao(models.Model):
     dataAvaliacao = models.DateField(verbose_name="Data Avaliação", null=False)
     descricao = models.TextField(verbose_name="Decrição", blank=False)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=False)
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False)
+    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False, default=None)
 
 class Convite(models.Model):
     emailDst = models.EmailField(verbose_name="Email")
     mensagem = models.TextField(verbose_name="Mensagem", blank=True)
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False)
+    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False, default=None)
 
 class Inscricao(models.Model):
     dataHora = models.DateTimeField(verbose_name="Horario")
@@ -102,6 +129,6 @@ class CheckIn(models.Model):
 
 class Certificado(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE)
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=False, default=None)
     dataEmissao = models.DateField(verbose_name="Data Emissão", null = False)
     codigo = models.CharField(verbose_name="Código", max_length=255, blank=True)

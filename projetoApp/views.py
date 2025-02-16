@@ -182,10 +182,12 @@ def adminEditarEvento(request, pk):
             for atividade in evento.atividade_set.all():
                 horario_inicio = request.POST.get(f'horario_inicio_{atividade.id}')
                 horario_fim = request.POST.get(f'horario_fim_{atividade.id}')
+                capacidade_maxima = request.POST.get(f'capacidade_maxima_{atividade.id}')
                 
-                if horario_inicio and horario_fim:
+                if horario_inicio and horario_fim and capacidade_maxima:
                     atividade.horario_inicio = horario_inicio
                     atividade.horario_fim = horario_fim
+                    atividade.capacidade_maxima = capacidade_maxima
                     atividade.save()
 
             messages.success(request, "Evento e atividades atualizados com sucesso!")
