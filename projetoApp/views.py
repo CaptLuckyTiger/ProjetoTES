@@ -337,19 +337,26 @@ def adminCheckin(request):
         })
     context["inscricoes_com_checkin"] = inscricoes_com_checkin
 
-    # Lista de alunos vinculados a atividades do evento
+    # Lista de atividades do evento
     atividades_do_evento = Atividade.objects.filter(evento=evento)
-    alunos_vinculados = Aluno.objects.filter(atividade__in=atividades_do_evento).distinct()
+    context["atividades"] = atividades_do_evento
 
-    # Verificar se cada aluno já possui check-in
-    alunos_com_checkin = []
-    for aluno in alunos_vinculados:
-        has_checkin = CheckIn.objects.filter(aluno=aluno, atividade__evento=evento).exists()
-        alunos_com_checkin.append({
-            'aluno': aluno,
-            'has_checkin': has_checkin
+    # Agrupar alunos por atividade
+    alunos_por_atividade = []
+    for atividade in atividades_do_evento:
+        alunos_vinculados = atividade.alunos.all()  # Usando o related_name da relação ManyToMany
+        alunos_com_checkin = []
+        for aluno in alunos_vinculados:
+            has_checkin = CheckIn.objects.filter(aluno=aluno, atividade=atividade).exists()
+            alunos_com_checkin.append({
+                'aluno': aluno,
+                'has_checkin': has_checkin
+            })
+        alunos_por_atividade.append({
+            'atividade': atividade,
+            'alunos': alunos_com_checkin
         })
-    context["alunos_com_checkin"] = alunos_com_checkin
+    context["alunos_por_atividade"] = alunos_por_atividade
 
     # Filtro baseado em parâmetros da URL
     if 'filter' in request.GET:
@@ -362,22 +369,29 @@ def adminCheckin(request):
         ]
         context["inscricoes_com_checkin"] = inscricoes_filtradas
 
-        # Filtrar alunos vinculados
-        alunos_filtrados = [
-            aluno_info for aluno_info in alunos_com_checkin
-            if filter_value.lower() in aluno_info['aluno'].nome.lower() or
-               filter_value.lower() in aluno_info['aluno'].sobrenome.lower()
-        ]
-        context["alunos_com_checkin"] = alunos_filtrados
+        # Filtrar alunos por atividade
+        atividades_filtradas = []
+        for atividade_info in alunos_por_atividade:
+            alunos_filtrados = [
+                aluno_info for aluno_info in atividade_info['alunos']
+                if filter_value.lower() in aluno_info['aluno'].nome.lower() or
+                   filter_value.lower() in aluno_info['aluno'].sobrenome.lower()
+            ]
+            if alunos_filtrados:
+                atividades_filtradas.append({
+                    'atividade': atividade_info['atividade'],
+                    'alunos': alunos_filtrados
+                })
+        context["alunos_por_atividade"] = atividades_filtradas
 
     return render(request, "admin_checkin.html", context)
 
 @login_required(login_url="/login")
-def adminCheckinValidarAluno(request, pk_evento, pk_aluno):
+def adminCheckinValidarAluno(request, pk_evento, pk_aluno, pk_atividade):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno)
+    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno, pk_atividade)
     return handler.validar()
 
 @login_required(login_url="/login")
@@ -389,11 +403,11 @@ def adminCheckinValidarParticipante(request, pk_evento, pk_inscricao):
     return handler.validar()
 
 @login_required(login_url="/login")
-def adminCheckinInvalidarAluno(request, pk_evento, pk_aluno):
+def adminCheckinInvalidarAluno(request, pk_evento, pk_aluno, pk_atividade):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno)
+    handler = get_checkin_handler('aluno', request, pk_evento, pk_aluno, pk_atividade)
     return handler.invalidar()
 
 @login_required(login_url="/login")
