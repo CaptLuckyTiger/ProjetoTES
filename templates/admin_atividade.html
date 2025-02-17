@@ -56,7 +56,7 @@
                                     {% for atividade in atividades %}
                                     <tr>
                                         <td>{{ atividade.id }}</td>
-                                        <td><a href="{% url 'adminVisualizarAtividade' pk=atividade.id %}">{{ atividade.topico }}</a></td>
+                                        <td>{{ atividade.topico }}</td>
                                         <td>
                                             <button type="button"
                                                     class="btn btn-danger"

@@ -70,16 +70,16 @@ class EventoForm(forms.ModelForm):
             'horario_fim': TimePickerInput(),  # Usa o TimePickerInput para 'horario_fim'
         }
         labels = {
-            'tema': mark_safe('<strong>Tema</strong>'),
-            'descricao': mark_safe('<strong>Descrição</strong>'),
-            'data': mark_safe('<strong>Data</strong>'),
-            'horario_inicio': mark_safe('<strong>Horário Início</strong>'),
-            'horario_fim': mark_safe('<strong>Horário Fim</strong>'),
-            'logradouro': mark_safe('<strong>Logradouro</strong>'),
-            'bairro': mark_safe('<strong>Bairro</strong>'),
-            'cidade': mark_safe('<strong>Cidade</strong>'),
-            'estado': mark_safe('<strong>UF</strong>'),
-            'banner': mark_safe('<strong>Banner</strong>'),
+            'tema': 'Tema',
+            'descricao': 'Descrição',
+            'data': 'Data',
+            'horario_inicio': 'Horário Início',
+            'horario_fim': 'Horário Fim',
+            'logradouro': 'Logradouro',
+            'bairro': 'Bairro',
+            'cidade': 'Cidade',
+            'estado': 'UF',
+            'banner': 'Banner',
         }
 
     def get_initial_data(self):
@@ -97,12 +97,26 @@ class EventoForm(forms.ModelForm):
 class AtividadeForm(forms.ModelForm):
     class Meta:
         model = Atividade
-        exclude = ['alunos', 'professores','data_cadastro']
+        fields = '__all__'
+        exclude = ['ativo', 'data_cadastro']
         widgets = {
             'horario_inicio': TimePickerInput(),
             'horario_fim': TimePickerInput(),
-            'capacidade_maxima': forms.NumberInput(attrs={'min': 1}),
         }
+        labels = {
+            'topico': 'Tópico',
+            'descricao': 'Descrição',
+            'evento': 'Evento',
+            'participantes': 'Participantes',
+            'alunos': 'Alunos',
+            'professores': 'Professores',
+            'horario_inicio': 'Horário Início',
+            'horario_fim': 'Horário Fim',
+        }
+    def __init__(self, *args, **kwargs):
+        super(AtividadeForm, self).__init__(*args, **kwargs)
+        # Limita a queryset do campo "evento" apenas aos eventos ativos
+        self.fields['evento'].queryset = Evento.objects.filter(ativo=True)
 
 class AvaliacaoForm(forms.ModelForm):
     class Meta:
