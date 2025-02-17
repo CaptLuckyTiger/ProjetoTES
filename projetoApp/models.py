@@ -28,6 +28,7 @@ class Usuario(models.Model):
         return self.user.email
 
 class Participante(Usuario):
+    #instituicao = models.CharField(verbose_name="Instituição", max_length=255, blank=True, null=True)
     objects = ParticipanteManager()
     def __str__(self):
         return f'{self.nome} {self.sobrenome}'
@@ -39,6 +40,24 @@ class Aluno(Usuario):
 
 class Professor(Usuario):
     objects = ProfessorManager()
+
+from django.db import models
+
+class Instituicao(models.Model):
+    nome = models.CharField(verbose_name="Nome da Instituição", max_length=255, blank=False)
+    telefone = models.CharField(verbose_name="Telefone", max_length=15, blank=True, null=True)
+    email = models.EmailField(verbose_name="E-mail", blank=True, null=True)
+    endereco = models.CharField(verbose_name="Endereço", max_length=255, blank=True, null=True)
+    cidade = models.CharField(verbose_name="Cidade", max_length=100, blank=True, null=True)
+    estado = models.CharField(verbose_name="Estado", max_length=2, blank=True, null=True)
+    participantes = models.ManyToManyField(Participante, verbose_name="Participantes")
+
+    def __str__(self):
+        return self.nome
+
+    class Meta:
+        verbose_name = "Instituição"
+        verbose_name_plural = "Instituições"
 
 class Evento(models.Model):
     tema = models.CharField(verbose_name = "Tema", max_length = 255, blank = False, default="Evento")

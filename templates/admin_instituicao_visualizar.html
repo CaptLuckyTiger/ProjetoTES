@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    {% include 'header_admin.html' %}
+    {% load bootstrap5 %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row flex-nowrap">
+            {% include 'sidebar.html' %}
+            <main class="col d-flex py-3">
+                <div class="container">
+                    <h3>Detalhes da Instituição</h3>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Informações da Instituição -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5>{{ instituicao.nome }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>CNPJ:</strong> {{ instituicao.cnpj }}</p>
+                                    <p><strong>Telefone:</strong> {{ instituicao.telefone }}</p>
+                                    <p><strong>E-mail:</strong> {{ instituicao.email }}</p>
+                                    <p><strong>Endereço:</strong> {{ instituicao.endereco }}</p>
+                                    <p><strong>Cidade:</strong> {{ instituicao.cidade }}</p>
+                                    <p><strong>Estado:</strong> {{ instituicao.estado }}</p>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Lista de Participantes Vinculados -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Participantes Vinculados (Total: {{ total_participantes }})</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if participantes %}
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Nome</th>
+                                                    <th>Sobrenome</th>
+                                                    <th>CPF</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for participante in participantes %}
+                                                <tr>
+                                                    <td>{{ participante.id }}</td>
+                                                    <td>{{ participante.nome }}</td>
+                                                    <td>{{ participante.sobrenome }}</td>
+                                                    <td>{{ participante.CPF }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% else %}
+                                        <p>Nenhum participante vinculado a esta instituição.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

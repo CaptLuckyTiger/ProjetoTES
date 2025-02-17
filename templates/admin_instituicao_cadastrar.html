@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    {% include 'header_admin.html' %}
+    {% load bootstrap5 %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row flex-nowrap">
+            {% include 'sidebar.html' %}
+            <main class="col d-flex py-3">
+                <div class="container">
+                    <h3>Cadastrar Nova Instituição</h3>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <form class="form-floating w-75" method="POST">
+                                {% csrf_token %}
+                                {% bootstrap_form form %}
+                                <input type="submit" class="btn btn-lg btn-primary mt-3 mb-3 w-100 " value="Salvar">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

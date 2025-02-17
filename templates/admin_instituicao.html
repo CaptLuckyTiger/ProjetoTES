@@ -11,10 +11,10 @@
             {% include 'sidebar.html' %}
             <main class="col d-flex py-3">
                 <div class="container">
-                    <h3>Participantes</h3>
+                    <h3>Instituições Visitantes</h3>
                     <div class="row align-items-center mt-2 mb-2">
                         <div class="col p-0">
-                            <form method="get" class="p-0 m-0" action="{% url 'adminParticipante' %}">
+                            <form method="get" class="p-0 m-0" action="{% url 'adminInstituicao' %}">
                                 <div class="input-group">
                                     <div class="input-group-append">
                                         <button type="submit" class="btn btn-primary me-2">Buscar</button>
@@ -24,7 +24,7 @@
                             </form>
                         </div>
                         <div class="col col-auto p-0 ps-2 d-flex justify-content-end">
-                            <a type="button" class="btn btn-success" href="cadastrar">Novo</a>
+                            <a type="button" class="btn btn-success" href="{% url 'adminCadastrarInstituicao' %}">Nova Instituição</a>
                         </div>
                     </div>
                     <div class="row">
@@ -34,41 +34,37 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Nome</th>
-                                        <th>Sobrenome</th>
-                                        <th>CPF</th>
-                                        <th>Instituição</th>
+                                        <th>Telefone</th>
+                                        <th>Email</th>
                                         <th>Operações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for participante in participantes %}
+                                    {% for instituicao in instituicoes %}
                                     <tr>
-                                        <td>{{ participante.id }}</td>
-                                        <td>{{ participante.nome }}</td>
-                                        <td>{{ participante.sobrenome }}</td>
-                                        <td>{{ participante.CPF }}</td>
+                                        <td>{{ instituicao.id }}</td>
+                                        <td>{{ instituicao.nome }}</td>
+                                        <td>{{ instituicao.telefone }}</td>
+                                        <td>{{ instituicao.email }}</td>
                                         <td>
-                                            {% if participante.instituicao_nome %}
-                                                {{ participante.instituicao_nome }}
-                                            {% else %}
-                                                Nenhuma instituição vinculada
-                                            {% endif %}
-                                        </td>
-                                        <td>
+                                            <!-- Botão de Edição -->
+                                            <a href="{% url 'adminEditarInstituicao' pk=instituicao.id %}" class="btn btn-warning" alt="Editar">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                            <!-- Botão de Visualização -->
+                                            <a href="{% url 'adminVisualizarInstituicao' pk=instituicao.id %}" class="btn btn-success" alt="Visualizar">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
                                             <!-- Botão de Exclusão -->
                                             <button type="button"
                                                     class="btn btn-danger"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#confirmDeleteModal"
-                                                    data-model="participante"
+                                                    data-model="aluno"
                                                     alt="Apagar"
-                                                    data-id="{{ participante.id }}">
+                                                    data-id="{{ aluno.id }}">
                                                     <i class="bi bi-trash"></i>
                                             </button>
-                                            <!-- Botão de Edição -->
-                                            <a href="{% url 'adminEditarParticipante' pk=participante.id %}" class="btn btn-warning" alt="Editar">
-                                                <i class="bi bi-pencil-square"></i>
-                                            </a>
                                         </td>
                                     </tr>
                                     {% endfor %}
