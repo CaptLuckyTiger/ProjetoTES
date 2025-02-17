@@ -1,9 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
-from django.db.models import Count 
+from django.db.models import OuterRef, Subquery
 from datetime import date, datetime
 from django.contrib import messages
 from .handlers import *
@@ -93,29 +92,31 @@ def entrar(request):
     return render(request, 'login_user.html', context={'form':form})
 
 def registrarUsuario(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    form = CustomUserForm(request.POST)
-    form2 = ParticipanteForm(request.POST)
-    if request.method == "POST":
-        if form.is_valid() and form2.is_valid():
-            user = form.save(commit=False)
-            participante = form2.save(commit=False)
+    if request.method == 'POST':
+        user_form = CustomUserForm(request.POST)
+        participante_form = ParticipanteForm(request.POST)
+        
+        if user_form.is_valid() and participante_form.is_valid():
+            # Salva o usuário
+            user = user_form.save()
 
-            user.first_name = form2.cleaned_data['nome']
-            user.last_name = form2.cleaned_data['sobrenome']
-            
-            user.save()
-            
-            participante.user = user
+            # Salva o participante vinculado ao usuário
+            participante = participante_form.save(commit=False)
+            participante.usuario = user  # Vincula o participante ao usuário
             participante.save()
-            #messages.success(request, f"Cadastro realizado com sucesso, <b>{user.first_name}</b>!")
-            return redirect('home')
-    else:
-        form = CustomUserForm(request.POST)
-        form2 = ParticipanteForm(request.POST)
 
-    return render(request, 'registro.html', {'form': form, "form2":form2})
+            messages.success(request, "Cadastro realizado com sucesso!")
+            return redirect('home')  # Redireciona para a página inicial
+    else:
+        user_form = CustomUserForm()
+        participante_form = ParticipanteForm()
+
+    context = {
+        'form': user_form,
+        'form2': participante_form
+    }
+
+    return render(request, 'registro.html', context)
 
 @login_required(login_url='login')
 def sair(request):
@@ -593,8 +594,15 @@ def adminParticipante(request):
         return redirect('home')
     
     context = {}
-    participante = Participante.objects.all().order_by('id')
-    context['participantes'] = participante
+
+    # Subquery para buscar a instituição de cada participante
+    instituicao_subquery = Instituicao.objects.filter(participantes=OuterRef('pk')).values('nome')[:1]
+    
+    # Anota cada participante com a instituição correspondente
+    participantes = Participante.objects.annotate(instituicao_nome=Subquery(instituicao_subquery))
+    
+    context['participantes'] = participantes.order_by('id')
+
     if 'filter' in request.GET:
         context['participantes'] = Participante.objects.get_filtered_participante(request.GET['filter'])
         return render(request, 'admin_participante.html', context)
@@ -645,21 +653,36 @@ def adminEditarParticipante(request, pk):
         return redirect('home')
     
     context = {}
-    participante = get_object_or_404(Participante,pk=pk)
-    form = CustomUserForm(request.POST, instance=participante.user)
-    form2 = ParticipanteForm(request.POST, instance=participante)
+    participante = get_object_or_404(Participante, pk=pk)
+    form = CustomUserForm(request.POST or None, instance=participante.user)
+    form2 = ParticipanteForm(request.POST or None, instance=participante)
+
     if request.method == "POST":
         if form2.is_valid() and form.is_valid():
-            participante = form2.save()
+            # Salva o usuário e o participante
             user = form.save()
-            #messages.success(request, f"Atividade Cadastrado com sucesso!")
+            participante = form2.save(commit=False)
+            participante.user = user
+            participante.save()
+
+            # Atualiza a relação com a instituição
+            instituicao = form2.cleaned_data.get('instituicao')
+            if instituicao:
+                # Remove o participante de todas as instituições e adiciona à nova
+                participante.instituicao_set.clear()  # Remove todas as relações existentes
+                instituicao.participantes.add(participante)  # Adiciona à nova instituição
+            else:
+                # Se nenhuma instituição for selecionada, remove o participante de todas as instituições
+                participante.instituicao_set.clear()
+
+            messages.success(request, "Participante atualizado com sucesso!")
             return redirect('adminParticipante')
         else:
             for error in list(form2.errors.values()):
-                pass
+                messages.error(request, error)
 
-    context['form2'] = ParticipanteForm(instance=participante)    
-    context['form'] = CustomUserForm(instance=participante.user)
+    context['form2'] = form2    
+    context['form'] = form
 
     return render(request, 'admin_participante_editar.html', context)
 
@@ -725,6 +748,51 @@ def adminEditarAluno(request, pk):
 
     return render(request, 'admin_aluno_editar.html', context)
 
+@login_required(login_url="/login")
+def adminInstituicao(request):
+    instituicoes = Instituicao.objects.all()
+    context = {'instituicoes': instituicoes}
+    return render(request, 'admin_instituicao.html', context)
+
+@login_required(login_url="/login")
+def adminCadastrarInstituicao(request):
+    if request.method == 'POST':
+        form = InstituicaoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Instituição cadastrada com sucesso.")
+            return redirect('adminInstituicao')
+    else:
+        form = InstituicaoForm()
+    context = {'form': form}
+    return render(request, 'admin_instituicao_cadastrar.html', context)
+
+@login_required(login_url="/login")
+def adminEditarInstituicao(request, pk):
+    instituicao = get_object_or_404(Instituicao, id=pk)
+    if request.method == 'POST':
+        form = InstituicaoForm(request.POST, instance=instituicao)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Instituição atualizada com sucesso.")
+            return redirect('adminInstituicao')
+    else:
+        form = InstituicaoForm(instance=instituicao)
+    context = {'form': form}
+    return render(request, 'admin_instituicao_editar.html', context)
+
+@login_required(login_url="/login")
+def adminVisualizarInstituicao(request, pk):
+    instituicao = get_object_or_404(Instituicao, id=pk)
+    participantes = instituicao.participantes.all()
+    total_participantes = participantes.count()
+
+    context = {
+        'instituicao': instituicao,
+        'participantes': participantes,
+        'total_participantes': total_participantes,
+    }
+    return render(request, 'admin_instituicao_visualizar.html', context)
 
 @login_required(login_url="/login")
 def adminAvaliar(request, pk_atividade, pk_aluno):

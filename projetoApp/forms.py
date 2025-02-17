@@ -1,6 +1,6 @@
 
 from django import forms
-from .models import CustomUser, Participante, Professor, Aluno, Atividade, Evento, Avaliacao
+from .models import CustomUser, Participante, Professor, Aluno, Atividade, Evento, Avaliacao, Instituicao
 from django.utils.safestring import mark_safe
 from bootstrap_datepicker_plus.widgets import TimePickerInput, DatePickerInput
 from django.db.models import Value as V
@@ -29,9 +29,16 @@ class CustomUserForm(forms.ModelForm):
         return user
 
 class ParticipanteForm(forms.ModelForm):
+    instituicao = forms.ModelChoiceField(
+        queryset=Instituicao.objects.all(),
+        required=False,
+        label="Instituição",
+        empty_label="Selecione uma instituição",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     class Meta:
         model = Participante
-        fields = ['nome', 'sobrenome', 'CPF']
+        fields = ['nome', 'sobrenome', 'CPF', 'instituicao']
         exclude = ['user']
 
 class ProfessorForm(forms.ModelForm):
@@ -110,3 +117,8 @@ class AddAlunoAtividadeForm(forms.Form):
 
 class AddProfessorAtividadeForm(forms.Form):
     professor = forms.ModelChoiceField(queryset=Professor.objects.all(), label='Adicionar Professor')
+
+class InstituicaoForm(forms.ModelForm):
+    class Meta:
+        model = Instituicao
+        fields = ['nome', 'telefone', 'email', 'cidade', 'estado']

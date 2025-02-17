@@ -4,7 +4,7 @@
 # [x] Controle de presença -> utilizado Template Method
 - Augusto
 
-# [] Adicionar cadastro de instituições visitantes
+# [x] Adicionar cadastro de instituições visitantes
 - Augusto
 
 # [] Adicionar cadastro de turmas
@@ -20,14 +20,14 @@ Exemplo: Mostra de sustentabilidade
 . alimentação saudável
 -----------------------------------------------------------------
 
-## [] EVENTO
+## [x] EVENTO
 - Augusto
 
 . alterar horario - adicionar matutino e verspertino [x]
 . adicionar intervalos por horários para visitantes (qtd maxima) [x]
 . upload de banner []
 . adicionar quantidade maxima de participantes por horário [x]
-. retirar a remoção de eventos -> desabilitar (só depois que ocorreu) []
+. retirar a remoção de eventos -> desabilitar (só depois que ocorreu) [x]
 
 ## [] PARTICIPANTE
 - Mizael
@@ -40,7 +40,7 @@ Exemplo: Mostra de sustentabilidade
 
 . participou? ajudou (organização do evento)?
 
-## [] ALUNO
+## [x] ALUNO
 - Augusto
 
 . desenvolveu as atividades previstas do tópico -> cumpriu as atividades?  [x]
