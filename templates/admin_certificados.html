@@ -47,7 +47,9 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=participante.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{% url 'adminDownloadCertificado' pk_atividade=evento.id pk_participante=participante.id %}" class="btn btn-success" alt="Gerar">
+                                                <i class="bi bi-patch-check"></i>
+                                            </a>
                                         </form>
                                     </td>
                                 </tr>
@@ -61,7 +63,10 @@
                                     <td>
                                         <form method="POST" class="p-0 m-0" action="{% url 'adminCertificado' %}">
                                             {% csrf_token %}   
-                                            <a href="{%url 'adminDownloadCertificado' pk_evento=evento.id pk_participante=aluno.id%}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                            <a href="{% url 'adminDownloadCertificado' pk_atividade=evento.id pk_participante=aluno.id %}" class="btn btn-success" alt="Gerar">
+                                                <i class="bi bi-patch-check"></i>
+                                            </a>
+                                            
                                         </form>
                                     </td>
                                 </tr>

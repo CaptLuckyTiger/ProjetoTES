@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.forms import AuthenticationForm
@@ -833,32 +834,69 @@ def adminCertificado(request):
 
 @login_required(login_url="/login")
 def adminDownloadCertificado(request, pk_atividade, pk_participante):
+    print(f"Buscando evento com pk={pk_atividade} e usuário com pk={pk_participante}")
+    
+    try:
+        # Buscando o evento com o pk fornecido (evento com pk=2)
+        evento = get_object_or_404(Evento, pk=pk_atividade)
+        print(f"Evento encontrado: {evento.tema}")
+        
+        # Buscando todas as atividades associadas ao evento
+        atividades = Atividade.objects.filter(evento=evento)
+        print(f"Atividades associadas ao evento: {atividades}")
+        
+        if not atividades:
+            print(f"Nenhuma atividade encontrada para o evento {evento.tema}")
+            return HttpResponse("Nenhuma atividade associada a esse evento.", status=404)
+        
+        # Buscando o usuário com o pk fornecido
+        usuario = get_object_or_404(Usuario, pk=pk_participante)
+        print(f"Usuário encontrado: {usuario}")
+    except Http404:
+        print(f"Evento com pk={pk_atividade} não encontrado.")
+        return HttpResponse("Evento não encontrado.", status=404)
+    
+    # Buscando Aluno ou Professor associado ao usuário
+    aluno = None
+    professor = None
+    try:
+        aluno = Aluno.objects.get(user=usuario.user)  # Aqui, usamos usuario.user para buscar o CustomUser
+        print(f"Aluno encontrado: {aluno}")
+    except Aluno.DoesNotExist:
+        print("Aluno não encontrado para o usuário.")
+    
+    try:
+        professor = Professor.objects.get(user=usuario.user)
+        print(f"Professor encontrado: {professor}")
+    except Professor.DoesNotExist:
+        print("Professor não encontrado para o usuário.")
+    
+    # Verificando se o usuário está associado a alguma atividade
+    for atividade in atividades:
+        if atividade.alunos.filter(pk=usuario.pk).exists() or atividade.professores.filter(pk=usuario.pk).exists():
+            print(f"Usuário é aluno ou professor da atividade: {atividade.tema}")
+            
+            # Gerar ou buscar certificado
+            certificado = Certificado.objects.filter(atividade=atividade, usuario=usuario).first()
+            if certificado:
+                pdf_path = certificado.codigo
+            else:
+                # Gerar certificado
+                pdf_path = generateCertificado(usuario.nome + " " + usuario.sobrenome, atividade.tema, "data", "semana")
+                certificado = Certificado(dataEmissao=datetime.now(), codigo=pdf_path, atividade=atividade, usuario=usuario)
+                certificado.save()
+            
+            # Gerar e retornar o PDF
+            try:
+                with open(pdf_path, "rb") as pdf:
+                    response = HttpResponse(pdf, content_type='application/pdf')
+                    response['Content-Disposition'] = f'attachment; filename="{atividade.tema}_certificado.pdf"'
+                    return response
+            except FileNotFoundError:
+                return HttpResponse("Certificado não encontrado.", status=404)
 
-    atividade = get_object_or_404(Atividade, pk=pk_atividade)
-    usuario = get_object_or_404(Usuario, pk=pk_participante)
-    certificado = Certificado.objects.filter(atividade=atividade, usuario=usuario)
-
-    if(Atividade.objects.filter(alunos=usuario, atividade=atividade).exists()):
-        Atividade = Atividade.objects.filter(alunos=usuario, atividade=atividade).first()
-    elif(Atividade.objects.filter(professores=usuario, atividade=atividade).exists()):
-        Atividade = Atividade.objects.filter(professores=usuario, atividade=atividade).first()
-    else:
-        redirect("adminCertificado")
-
-    if certificado:
-        pdf_path = certificado.first().codigo
-    else:
-        date_time = atividade.data.strftime("%d/%m/%Y")
-        diff = atividade.data - Atividade.data_cadastro
-        semana = (diff.days // 7) * 14
-        pdf_path = generateCertificado(usuario.nome+" "+usuario.sobrenome, atividade.tema, date_time, str(semana))
-        certificado = Certificado(dataEmissao=datetime.now(), codigo=pdf_path, atividade=atividade, usuario=usuario)
-        certificado.save()
-
-    with open(pdf_path, "rb") as pdf:
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="certificado.pdf"'
-    return response
+    # Caso o usuário não seja encontrado em nenhuma atividade
+    return HttpResponse("Usuário não encontrado como aluno ou professor em nenhuma atividade.", status=404)
 
 @login_required(login_url="/login")
 def certificados(request):
@@ -872,6 +910,17 @@ def certificados(request):
 
 @login_required(login_url="/login")
 def downloadCertificado(request, pk_atividade, pk_participante):
+    # Primeiro tenta buscar com o pk_atividade original
+    atividade = Atividade.objects.filter(pk=pk_atividade).first()
+
+    # Se não encontrar, tenta com um outro ID (como 5 ou 6)
+    if not atividade:
+        atividade = Atividade.objects.filter(pk=5).first()  # ou pk=6
+
+    if not atividade:
+        # Caso não encontre nenhuma atividade, você pode lançar um erro ou retornar uma resposta adequada
+        return HttpResponse("Atividade não encontrada", status=404)
+
     atividade = get_object_or_404(Atividade, pk=pk_atividade)
     participante = get_object_or_404(Participante, user=pk_participante)
     certificado = Certificado.objects.filter(atividade=atividade, usuario=participante)
