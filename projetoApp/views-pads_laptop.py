@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout, authenticate
-from django.db.models import OuterRef, Subquery, Q
+from django.db.models import OuterRef, Subquery
 from datetime import date, datetime
-from django.http import HttpResponse
 from django.contrib import messages
+from django.http import HttpResponse
 from .handlers import *
 from .strategies import *
 from .forms import *
@@ -13,7 +13,6 @@ from .models import *
 from .certificate import generateCertificado
 from .handlers import ParticipanteCheckInHandler, AlunoCheckInHandler
 
-# Dicionário de estratégias
 STRATEGIES = {
     'aluno': AlunoDeleteStrategy(),
     'professor': ProfessorDeleteStrategy(),
@@ -164,7 +163,7 @@ def adminCadastrarEvento(request):
                 pass
             context['form'] = EventoForm(request.POST)
     else:
-        context['form'] = EventoForm()    
+        context['form'] = EventoForm(initial=EventoForm.get_inital_data())    
 
     return render(request, 'admin_evento_cadastrar.html', context)
 
@@ -456,33 +455,25 @@ def adminAtividade(request):
     
     professor = Professor.objects.filter(user=request.user).first()
     context = {}
-
-    # Filtra atividades: exibe se o evento vinculado estiver ativo ou se não houver evento vinculado
-    atividades_queryset = Atividade.objects.filter(Q(evento__ativo=True) | Q(evento__isnull=True))
-    
-    # Para a lista principal, mostra apenas as atividades vinculadas ao professor
-    atividades_professor = atividades_queryset.filter(professores=professor)
-    
-    # Também usamos a queryset para preencher o <select> (exibindo todas as atividades ou, se preferir, os eventos ativos)
-    context["eventos"] = atividades_queryset.distinct()
-    context["atividades"] = atividades_professor
+    context["eventos"] = Atividade.objects.filter(ativo=True)
+    context["atividades"] = Atividade.objects.filter(professores=professor)
 
     if 'filter' in request.GET:
         filter_value = request.GET['filter']
         event_id = request.GET.get('event', '-1')
         filter_by = request.GET.get('filter_by', 'id')
 
-        # Filtra pelo tópico da atividade
-        atividades = atividades_queryset.filter(topico__icontains=filter_value)
-        
-        # Se o usuário selecionar um evento específico, filtra pelo ID do evento
+        # Filtra por tópico
+        atividades = Atividade.objects.filter(topico__icontains=filter_value)
+
+        # Filtra por evento (se não for "Todos")
         if event_id != '-1':
             atividades = atividades.filter(evento__pk=event_id)
-        
-        # Se o filtro for "Minhas Atividades", filtra pelas atividades do professor
+
+        # Filtra por professor (se for "Minhas Atividades")
         if filter_by == 'id':
             atividades = atividades.filter(professores=professor)
-        
+
         context["atividades"] = atividades
         return render(request, "admin_atividade.html", context)
 
@@ -494,26 +485,28 @@ def adminAtividade(request):
 
     return render(request, "admin_atividade.html", context)
 
-@login_required(login_url="/login")
+@login_required(login_url="/login")    
 def adminCadastrarAtividade(request):
     if not request.user.validated:
         logout(request)
         return redirect('home')
-
-    if request.method == 'POST':
-        form = AtividadeForm(request.POST)
+    context = {}
+    form = AtividadeForm(request.POST)
+    if request.method == "POST":
         if form.is_valid():
-            atividade = form.save(commit=False)
+            atividade = form.save()
+            professor = Professor.objects.get(user = request.user)
+            atividade.professores.add(professor)
             atividade.save()
-            form.save_m2m()
-
-            messages.success(request, "Atividade cadastrada com sucesso!")
+            #messages.success(request, f"Atividade Cadastrado com sucesso!")
             return redirect('adminAtividade')
+        else:
+            for error in list(form.errors.values()):
+                pass
+            context['form'] = AtividadeForm(request.POST)
     else:
-        form = AtividadeForm()
-
-    context = {'form': form}
-    return render(request, 'admin_atividade_cadastrar.html', context)
+        context['form'] = AtividadeForm()
+    return render(request, "admin_cadastrar_atividade.html", context)
 
 @login_required(login_url="/login")
 def adminVisualizarAtividade(request,pk):
@@ -661,36 +654,21 @@ def adminEditarParticipante(request, pk):
         return redirect('home')
     
     context = {}
-    participante = get_object_or_404(Participante, pk=pk)
-    form = CustomUserForm(request.POST or None, instance=participante.user)
-    form2 = ParticipanteForm(request.POST or None, instance=participante)
-
+    participante = get_object_or_404(Participante,pk=pk)
+    form = CustomUserForm(request.POST, instance=participante.user)
+    form2 = ParticipanteForm(request.POST, instance=participante)
     if request.method == "POST":
         if form2.is_valid() and form.is_valid():
-            # Salva o usuário e o participante
+            participante = form2.save()
             user = form.save()
-            participante = form2.save(commit=False)
-            participante.user = user
-            participante.save()
-
-            # Atualiza a relação com a instituição
-            instituicao = form2.cleaned_data.get('instituicao')
-            if instituicao:
-                # Remove o participante de todas as instituições e adiciona à nova
-                participante.instituicao_set.clear()  # Remove todas as relações existentes
-                instituicao.participantes.add(participante)  # Adiciona à nova instituição
-            else:
-                # Se nenhuma instituição for selecionada, remove o participante de todas as instituições
-                participante.instituicao_set.clear()
-
-            messages.success(request, "Participante atualizado com sucesso!")
+            #messages.success(request, f"Atividade Cadastrado com sucesso!")
             return redirect('adminParticipante')
         else:
             for error in list(form2.errors.values()):
-                messages.error(request, error)
+                pass
 
-    context['form2'] = form2    
-    context['form'] = form
+    context['form2'] = ParticipanteForm(instance=participante)    
+    context['form'] = CustomUserForm(instance=participante.user)
 
     return render(request, 'admin_participante_editar.html', context)
 
@@ -1004,10 +982,8 @@ def deleteItem(request, model, id):
             raise ValueError("Model não suportado.")
 
         strategy.delete(id)
-        print(f'{model} excluído com sucesso!')
         messages.success(request, f'{model} excluído com sucesso!')
     except Exception as e:
-        print(f'Erro ao excluir: {str(e)}')
         messages.error(request, f'Erro ao excluir: {str(e)}')
 
     return redirect(request.META.get('HTTP_REFERER', 'home'))

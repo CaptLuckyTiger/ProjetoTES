@@ -106,11 +106,13 @@ class Atividade(models.Model):
 
     def clean(self):
         super().clean()
-        total_inscritos = self.participantes.count() + self.alunos.count()
-        if self.capacidade_maxima < total_inscritos:
-            raise ValidationError(
-                f"A capacidade não pode ser menor que o número atual de inscritos ({total_inscritos})"
-            )
+        if self.pk:
+            total_inscritos = self.participantes.count() + self.alunos.count()
+            if self.capacidade_maxima < total_inscritos:
+                raise ValidationError(
+                    f"A capacidade não pode ser menor que o número atual de inscritos ({total_inscritos})"
+                )
+            
     def adicionar_participante(self, participante):
         if not self.checar_disponibilidade():
             raise ValidationError("Não há vagas disponíveis nesta atividade")
@@ -125,11 +127,6 @@ class Avaliacao(models.Model):
     dataAvaliacao = models.DateField(verbose_name="Data Avaliação", null=False)
     descricao = models.TextField(verbose_name="Decrição", blank=False)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=False)
-    atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False, default=None)
-
-class Convite(models.Model):
-    emailDst = models.EmailField(verbose_name="Email")
-    mensagem = models.TextField(verbose_name="Mensagem", blank=True)
     atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False, default=None)
 
 class Inscricao(models.Model):
