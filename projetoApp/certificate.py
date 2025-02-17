@@ -8,6 +8,8 @@ from datetime import datetime
 
 TEMPLATE_PATH = "projetoApp\certificate_template\modelo.pptx"
 
+
+
 def generateCertificado(nomeCompleto, temaAtividade, dataAtividade, cargaHoraria):   
     certificado = Presentation(TEMPLATE_PATH)
     replace_text_in_presentation(certificado, "FULLNAME", nomeCompleto)

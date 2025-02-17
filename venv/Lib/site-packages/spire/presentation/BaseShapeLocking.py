@@ -1,0 +1,24 @@
+from enum import Enum
+from plum import dispatch
+from typing import TypeVar,Union,Generic,List,Tuple
+from spire.presentation.common import *
+from spire.presentation import *
+from ctypes import *
+import abc
+
+class BaseShapeLocking (  PptObject) :
+    """
+    <summary>
+        Represents a base class for shape locks 
+    </summary>
+    """
+    @property
+    def HasLocks(self)->bool:
+        """
+
+        """
+        GetDllLibPpt().BaseShapeLocking_get_HasLocks.argtypes=[c_void_p]
+        GetDllLibPpt().BaseShapeLocking_get_HasLocks.restype=c_bool
+        ret = CallCFunction(GetDllLibPpt().BaseShapeLocking_get_HasLocks,self.Ptr)
+        return ret
+

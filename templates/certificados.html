@@ -19,7 +19,9 @@
                             <td>{{atividade.tema}}</td>
                             <td>{{atividade.data}}</td>
                             <td>
-                                <a href="{%url 'downloadCertificado' pk_atividade=atividade.id pk_participante=user.id %}" class="btn btn-success" alt="Gerar"><i class="bi bi-patch-check"></i></a>
+                                <a href="{% url 'adminDownloadCertificado' pk_atividade=evento.id pk_participante=participante.id %}" class="btn btn-success" alt="Gerar">
+                                    <i class="bi bi-patch-check"></i>
+                                </a>
                             </td>
                         </tr>
                         {%endfor%}
