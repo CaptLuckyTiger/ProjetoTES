@@ -89,7 +89,7 @@ class Atividade(models.Model):
     participantes = models.ManyToManyField(Participante, verbose_name="Participantes")
     alunos = models.ManyToManyField(Aluno, verbose_name="Alunos")
     professores = models.ManyToManyField(Professor, verbose_name="Professores")
-    evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=True)
+    evento = models.ForeignKey(Evento, on_delete=models.CASCADE,null=True)
     ativo = models.BooleanField(verbose_name="Ativo", blank=False, null= False, default=True)
     data_cadastro = models.DateField(verbose_name="Data Criação", default=date.today)
     horario_inicio = models.TimeField(verbose_name="Horário Início", blank=True, null=True)
@@ -125,7 +125,7 @@ class Atividade(models.Model):
 
 class Avaliacao(models.Model):
     dataAvaliacao = models.DateField(verbose_name="Data Avaliação", null=False)
-    descricao = models.TextField(verbose_name="Decrição", blank=False)
+    descricao = models.TextField(verbose_name="Descrição", blank=False)
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=False)
     atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=False, default=None)
 
@@ -140,8 +140,9 @@ class Inscricao(models.Model):
 class CheckIn(models.Model):
     dataHora = models.DateTimeField(verbose_name="Horario")
     inscricao = models.ForeignKey(Inscricao, on_delete=models.CASCADE, null=True, blank=True)
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=True, blank=True)
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, null=True, blank=True, to_field='usuario_ptr_id')
     atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, null=True, blank=True)
+
 
 class Certificado(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
