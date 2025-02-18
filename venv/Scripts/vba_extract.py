@@ -1,4 +1,4 @@
-#!C:\Users\Mizael\Documents\GitHub\ProjetoTES\venv\Scripts\python.exe
+#!C:\Users\fpadi\Documents\ProjetoTES\venv\Scripts\python.exe
 
 ##############################################################################
 #
