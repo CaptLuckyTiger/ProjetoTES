@@ -100,16 +100,13 @@ def registrarUsuario(request):
         participante_form = ParticipanteForm(request.POST)
         
         if user_form.is_valid() and participante_form.is_valid():
-            # Salva o usuário
             user = user_form.save()
-
-            # Salva o participante vinculado ao usuário
             participante = participante_form.save(commit=False)
-            participante.usuario = user  # Vincula o participante ao usuário
+            participante.user = user
             participante.save()
 
             messages.success(request, "Cadastro realizado com sucesso!")
-            return redirect('home')  # Redireciona para a página inicial
+            return redirect('home')
     else:
         user_form = CustomUserForm()
         participante_form = ParticipanteForm()
@@ -120,6 +117,7 @@ def registrarUsuario(request):
     }
 
     return render(request, 'registro.html', context)
+
 
 @login_required(login_url='login')
 def sair(request):

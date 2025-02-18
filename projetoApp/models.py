@@ -27,19 +27,29 @@ class Usuario(models.Model):
     def __str__(self):
         return self.user.email
 
-class Participante(Usuario):
-    #instituicao = models.CharField(verbose_name="Instituição", max_length=255, blank=True, null=True)
-    objects = ParticipanteManager()
-    def __str__(self):
-        return f'{self.nome} {self.sobrenome}'
+class Instituicao(models.Model):
+    nome = models.CharField(max_length=100)
+    telefone = models.CharField(max_length=20)
+    endereco = models.TextField()
+
+class Participante(models.Model):
+    nome = models.CharField(max_length=100)
+    sobrenome = models.CharField(max_length=100)
+    idade = models.IntegerField(null=True, blank=True)  # Campo de idade
+    instituicao = models.ForeignKey(Instituicao, on_delete=models.SET_NULL, null=True, blank=True)  # Relacionamento com Instituicao
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
 
 class Aluno(Usuario):
     objects = AlunoManager()
     def __str__(self):
         return f'{self.nome} {self.sobrenome}'
 
-class Professor(Usuario):
-    objects = ProfessorManager()
+class Professor(models.Model):
+    nome = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+
+
 
 from django.db import models
 
@@ -149,3 +159,6 @@ class Certificado(models.Model):
     evento = models.ForeignKey(Evento, on_delete=models.CASCADE, null=False, default=None)
     dataEmissao = models.DateField(verbose_name="Data Emissão", null = False)
     codigo = models.CharField(verbose_name="Código", max_length=255, blank=True)
+
+
+    
